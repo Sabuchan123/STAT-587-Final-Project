@@ -48,7 +48,7 @@ end_date='2025-12-31'
 print(f"Running: {sys.argv[0]}")
 
 CLEANED_DATA=pd.DataFrame()
-if (not (Path("../bin") / "total_data.csv").exists()):
+if (not (cwd / "bin" / "total_data.csv").exists()):
     print("Setting up necessary variables...")
     TICKERS=sys.argv[1:]
     print("Retrieved TICKERS.")
@@ -68,11 +68,10 @@ if (not (Path("../bin") / "total_data.csv").exists()):
     print("Downloading over ", cycles + 1, " cycles.")
     print("Cycle 1")
     STOCK_DATA=yf.download(TICKERS[0:50], start=start_date, end=end_date, threads=2)
-    time.sleep(7)
     for i in range(cycles):
+        time.sleep(7)
         print("Cycle", i+2)
         STOCK_DATA=pd.concat([STOCK_DATA, yf.download(TICKERS[50*(i+1):50*(i+2)], start=start_date, end=end_date, threads=2)], axis=1)
-        time.sleep(7)
     print("Finished downloading data.")
 
     print("Formatting data...")
@@ -112,11 +111,10 @@ else:
         print("Downloading over ", cycles + 1, " cycles.")
         print("Cycle 1")
         STOCK_DATA=yf.download(TICKERS[0:50], start=start_date, end=end_date, threads=2)
-        time.sleep(7)
         for i in range(cycles):
+            time.sleep(7)
             print("Cycle", i+2)
             STOCK_DATA=pd.concat([STOCK_DATA, yf.download(TICKERS[50*(i+1):50*(i+2)], start=start_date, end=end_date, threads=2)], axis=1)
-            time.sleep(7)
         print("Finished downloading data.")
 
         print("Formatting data...")
