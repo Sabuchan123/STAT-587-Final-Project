@@ -67,7 +67,7 @@ if (not (Path("../bin") / "total_data.csv").exists()):
     STOCK_DATA=yf.download(TICKERS[0:50], start=start_date, end=end_date, threads=2)
     time.sleep(7)
     for i in range(cycles):
-        print("Cycle ", i+2)
+        print("Cycle", i+2)
         STOCK_DATA=pd.concat([STOCK_DATA, yf.download(TICKERS[50*(i+1):50*(i+2)], start=start_date, end=end_date, threads=2)], axis=1)
         time.sleep(7)
     print("Finished downloading data.")
@@ -84,14 +84,8 @@ if (not (Path("../bin") / "total_data.csv").exists()):
     print(TOTAL_DATA["Close"].head())
     print("Finished formatting data.")
 
-    print("Cleaning up data utilizing linear interpolation, forward and backward fill...")
-    CLEANED_DATA=TOTAL_DATA.interpolate(method="linear", limit_direction="both", limit=1).ffill().bfill()
-    print(CLEANED_DATA["Close"].head())
-    print("Finished cleaning up the data.")
-    print("Final NA count: ", CLEANED_DATA.isnull().sum().sum())
-
     print("Generating .csv file to store data at bin folder named: total_data.csv")
-    CLEANED_DATA.to_csv(Path("../bin") / 'total_data.csv', index=True)
+    TOTAL_DATA.to_csv(Path("../bin") / 'total_data.csv', index=True)
     print("Finished creating file.")
 else:
     confirmation=input("Data file was found, would you like to download and overwrite existing file (true/yes)? ")
@@ -117,7 +111,7 @@ else:
         STOCK_DATA=yf.download(TICKERS[0:50], start=start_date, end=end_date, threads=2)
         time.sleep(7)
         for i in range(cycles):
-            print("Cycle ", i+2)
+            print("Cycle", i+2)
             STOCK_DATA=pd.concat([STOCK_DATA, yf.download(TICKERS[50*(i+1):50*(i+2)], start=start_date, end=end_date, threads=2)], axis=1)
             time.sleep(7)
         print("Finished downloading data.")
@@ -134,14 +128,8 @@ else:
         print(TOTAL_DATA["Close"].head())
         print("Finished formatting data.")
 
-        print("Cleaning up data utilizing linear interpolation, forward and backward fill...")
-        CLEANED_DATA=TOTAL_DATA.interpolate(method="linear", limit_direction="both", limit=1).ffill().bfill()
-        print(CLEANED_DATA["Close"].head())
-        print("Finished cleaning up the data.")
-        print("Final NA count: ", CLEANED_DATA.isnull().sum().sum())
-
         print("Generating .csv file to store data at bin folder named: total_data.csv")
-        CLEANED_DATA.to_csv(Path("../bin") / 'total_data.csv', index=True)
+        TOTAL_DATA.to_csv(Path("../bin") / 'total_data.csv', index=True)
         print("Finished creating file.")
     else:
         print("Did not redownload.")
