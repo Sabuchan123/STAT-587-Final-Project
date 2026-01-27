@@ -134,4 +134,7 @@ else:
     else:
         print("Did not redownload.")
 
+print("This window will close automatically in 5 seconds.")
+time.sleep(5)
+
 # pd.read_csv('bin/input_data.csv', header=[0, 1, 2], index_col=0, parse_dates=True) for reading csv with multiple headers.

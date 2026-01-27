@@ -31,10 +31,14 @@ int main() {
 
     std::vector<std::string> TICKERS = retrieve_tickers();
 
-    std::cout << std::flush;
     std::stringstream ss;
-    ss << "start cmd /k " << env_pyt.string() << " -u \"" << cwd.string() << "/PyScripts/data_io.py\" ";
+    ss << "start /wait cmd /c " << env_pyt.string() << " -u \"" << cwd.string() << "/PyScripts/data_io.py\" ";
     for (int i = 0; i < TICKERS.size(); i++) ss << TICKERS[i] << " ";
+    std::system(ss.str().c_str());
+
+    ss.str("");
+    ss.clear();
+    ss << "start cmd /k " << env_pyt.string() << " -u \"" << cwd.string() << "/PyScripts/data_preprocessing.py\"";
     std::system(ss.str().c_str());
 
     return 1;
