@@ -3,6 +3,9 @@ import yfinance as yf
 import pandas as pd
 from pathlib import Path
 
+cwd=Path.cwd()
+while (cwd.name!="STAT-587-Final-Project"): cwd=cwd.parent
+
 # Hyperparameters
 lag=[1, 3, 7, 14]
 ma_window=[7, 14, 21]
@@ -20,7 +23,7 @@ Friday=[]
 
 idx = pd.IndexSlice
 
-DATA=pd.read_csv(Path('../bin/total_data.csv'), header=[0, 1, 2], index_col=0, parse_dates=True)
+DATA=pd.read_csv(cwd / "bin" / "total_data.csv", header=[0, 1, 2], index_col=0, parse_dates=True)
 
 MODIFIED_DATA=DATA.loc[:, idx[['Close', 'Open', 'High', 'Low'], :, :]].copy().pct_change().rename(columns={metric: f"{metric}_pc" for metric in ['Close', 'Open', 'High', 'Low']}, level=0).iloc[1:]
 

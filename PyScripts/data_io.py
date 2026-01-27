@@ -39,6 +39,9 @@ from pathlib import Path
 # | Stock m      |         |                                             |
 # ------------------------------------------------------------------------------------------------------------------
 
+cwd=Path.cwd()
+while (cwd.name!="STAT-587-Final-Project"): cwd=cwd.parent
+
 start_date='2024-01-01'
 end_date='2025-12-31'
 
@@ -85,7 +88,7 @@ if (not (Path("../bin") / "total_data.csv").exists()):
     print("Finished formatting data.")
 
     print("Generating .csv file to store data at bin folder named: total_data.csv")
-    TOTAL_DATA.to_csv(Path("../bin") / 'total_data.csv', index=True)
+    TOTAL_DATA.to_csv(cwd / "bin" / 'total_data.csv', index=True)
     print("Finished creating file.")
 else:
     confirmation=input("Data file was found, would you like to download and overwrite existing file (true/yes)? ")
@@ -129,12 +132,13 @@ else:
         print("Finished formatting data.")
 
         print("Generating .csv file to store data at bin folder named: total_data.csv")
-        TOTAL_DATA.to_csv(Path("../bin") / 'total_data.csv', index=True)
+        TOTAL_DATA.to_csv(cwd / "bin" / 'total_data.csv', index=True)
         print("Finished creating file.")
     else:
         print("Did not redownload.")
 
-print("This window will close automatically in 5 seconds.")
-time.sleep(5)
+if sys.platform=="win32":
+    print("This window will close automatically in 5 seconds.")
+    time.sleep(5)
 
 # pd.read_csv('bin/input_data.csv', header=[0, 1, 2], index_col=0, parse_dates=True) for reading csv with multiple headers.
