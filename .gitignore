@@ -1,10 +1,9 @@
 /*
 
-!/src/
 !/PyScripts/
 !/.gitignore
 !/README.md
-!/include
-!/bin/placeholder.txt
 
 /PyScripts/env/
+/PyScripts/*.csv
+/PyScripts/__pycache__
