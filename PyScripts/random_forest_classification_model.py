@@ -42,7 +42,7 @@ if __name__=="__main__":
 
     display_feat_importances(RFClassifier_red_LASSO, X_train)
 
-    acc, avg_dir=classification_accuracy(RFClassifier_red_PCA.predict(X_test), y_test)
+    acc, avg_dir=classification_accuracy(RFClassifier_red_LASSO.predict(X_test), y_test)
     print("Accuracy (Test):", acc)
     print("Average Direction (Test):", avg_dir)
 

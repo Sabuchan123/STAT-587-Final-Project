@@ -32,7 +32,7 @@ y_test=to_binary_class(y_test)
 
 # Support Vector Machine Classification
 print("------- Training Support Vector Machine")
-svm_model = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=1, verbose=1)
+svm_model = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=1, verbose=1, tol=1e-2)
 svm_model.fit(X_train, y_train)
 print("Finished Training SVM -------")
 
