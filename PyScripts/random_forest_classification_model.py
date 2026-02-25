@@ -14,23 +14,36 @@ if __name__=="__main__":
     y_train=to_binary_class(y_train)
     y_test=to_binary_class(y_test)
     
+    # ------- BASE APPLICATION -------
+    RFClassifier_base=RandomForestClassifier(random_state=1, n_jobs=-1)
+    RFClassifier_base.fit(X_train, y_train)
+
+    display_feat_importances(RFClassifier_base, X_train)
+
+    acc, avg_dir=classification_accuracy(RFClassifier_base.predict(X_test), y_test)
+    print("Accuracy (Test):", acc)
+    print("Average Direction (Test):", avg_dir)
+
+    classification_wfv_eval(RFClassifier_base, X_train, y_train)
+
+    input("Press Enter to continue...")
     # ------- PCA APPLICATION -------
 
-    # X_train, X_test=apply_PCA(X_train, X_test, n_comp=0.9) 
+    X_train, X_test=apply_PCA(X_train, X_test, n_comp=0.9) 
 
-    # RFClassifier_red_PCA=RandomForestClassifier(random_state=1, n_jobs=-1)
-    # RFClassifier_red_PCA.fit(X_train, y_train)
+    RFClassifier_red_PCA=RandomForestClassifier(random_state=1, n_jobs=-1)
+    RFClassifier_red_PCA.fit(X_train, y_train)
 
-    # display_feat_importances(RFClassifier_red_PCA, X_train)
+    display_feat_importances(RFClassifier_red_PCA, X_train)
 
-    # acc, avg_dir=classification_accuracy(RFClassifier_red_PCA.predict(X_test), y_test)
-    # print("Accuracy (Test):", acc)
-    # print("Average Direction (Test):", avg_dir)
+    acc, avg_dir=classification_accuracy(RFClassifier_red_PCA.predict(X_test), y_test)
+    print("Accuracy (Test):", acc)
+    print("Average Direction (Test):", avg_dir)
 
-    # # classification_cv_eval(RFClassifier_red_PCA, X_train, y_train)
-    # classification_wfv_eval(RFClassifier_red_PCA, X_train, y_train)
+    # classification_cv_eval(RFClassifier_red_PCA, X_train, y_train)
+    classification_wfv_eval(RFClassifier_red_PCA, X_train, y_train)
 
-    # input("Press Enter to continue...")
+    input("Press Enter to continue...")
     # ------- LASSO APPLICATION -------
 
     X_train, X_test, _, _=train_test_split(X, y_regression, test_size=0.2, random_state=1)
