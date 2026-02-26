@@ -39,7 +39,7 @@ def step_wise_reg_cv(X_train: pd.DataFrame, y_train: pd.DataFrame, X_test: pd.Da
     X_train = pd.DataFrame(X_train, index=X_train_index, columns=X_train_columns)
     X_test = pd.DataFrame(X_test, index=X_test_index, columns=X_test_columns)
     print("Finished Scaling.")
-    mfs=MFS(model, int(np.sqrt(X_train.shape[0])), forward=True, floating=True, cv=3, n_jobs=-1)
+    mfs=MFS(model, (1, int(np.sqrt(X_train.shape[0]))), forward=True, floating=True, cv=3, n_jobs=-1)
     mfs.fit(X_train, y_train)
     selected_features=list(mfs.k_feature_names_)
     print("Finished Applying Step-Wise Regression (CV) -------")
@@ -57,8 +57,8 @@ def step_wise_reg_wfv(model, X_train: pd.DataFrame, y_train: pd.DataFrame, X_tes
 
 def LASSO(X_train: pd.DataFrame, y_train: pd.DataFrame) -> pd.DataFrame:
     print("------- Applying LASSO")
-    alphas=np.logspace(-7, 2, 100)
-    lasso_cv=LassoCV(alphas=alphas, cv=4, random_state=42, n_jobs=-1, tol=1e-2)
+    alphas=np.logspace(-5, 1, 25)
+    lasso_cv=LassoCV(alphas=alphas, cv=3, random_state=1, n_jobs=-1, tol=2e-2)
     lasso_cv.fit(X_train, y_train)
     print("Finished Applying LASSO -------")
     return X_train[X_train.columns[lasso_cv.coef_!=0]]

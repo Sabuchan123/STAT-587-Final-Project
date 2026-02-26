@@ -7,3 +7,4 @@
 /PyScripts/env/
 /PyScripts/*.csv
 /PyScripts/__pycache__
+/PyScripts/.devcontainer
