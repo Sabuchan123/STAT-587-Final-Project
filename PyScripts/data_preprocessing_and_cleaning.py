@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import pandas as pd
 from pathlib import Path
+import pyarrow.parquet as pq
+import ast
 
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 8)
@@ -24,7 +26,8 @@ def clean_data():
     idx = pd.IndexSlice
 
     print("------- Downloading Data")
-    DATA=pd.read_csv(cwd / "PyScripts" / "raw_data.csv", header=[0, 1, 2], index_col=0, parse_dates=True)
+    table = pq.read_table(cwd / "PyScripts" / "raw_data.parquet")
+    DATA = table.to_pandas()
     print("Finished Downloading Data -------")
     print("Initial shape:", DATA.shape[0], "rows,", DATA.shape[1], "columns.")
 
@@ -45,10 +48,14 @@ def clean_data():
     print("Finished Cleaning Data -------")
 
     print("------- Generating Necessary Features")
+
     # Generating percent change from day before to current day. 
     features=DATA.loc[:, idx[['Close', 'Open', 'High', 'Low'], 'Stocks', :]].copy().pct_change().rename(columns={metric: f"{metric} PC" for metric in ['Close', 'Open', 'High', 'Low']}, level=0)
     features=pd.concat([features, DATA.loc[:, idx[['Close', 'Open', 'High', 'Low', 'Volume'], :, :]].copy()], axis=1)
     print("Created Percent Changes.")
+
+    features["Day of Week"]=features.index.dayofweek
+    print("Created Day of Week.")
 
     y_regression=((DATA.loc[:, idx['Close', 'Index', '^SPX']] - DATA.loc[:, idx['Open', 'Index', '^SPX']]) / DATA.loc[:, idx['Open', 'Index', '^SPX']]).rename("Target Regression").shift(-1)
     print("Created Target (Regression).")
@@ -149,6 +156,5 @@ def pull_features(dataframe, feature_name, include=False):
             if feature_name in metric:
                 new_dataframe = pd.concat([new_dataframe, dataframe.loc[:, idx[metric, :, :]]], axis=1)
         return new_dataframe
-
 
 
