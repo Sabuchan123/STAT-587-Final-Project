@@ -47,7 +47,7 @@ pipeline = Pipeline([
 # }
 
 param_grid = {
-    'svc__C': [0.01, 0.1]
+    'svc__C': [0.3]
 }
 cv = KFold(n_splits=5, shuffle=True, random_state=1)
 grid = GridSearchCV(pipeline, param_grid, cv=cv, scoring='f1', n_jobs=-1, verbose=1, return_train_score=True)
@@ -70,7 +70,7 @@ print("Finished Applying SVM Model -------")
 
 
 
-
+go
 print("------- SVM Model Performance")
 accuracy = accuracy_score(y_test, y_pred_svm)
 precision = precision_score(y_test, y_pred_svm, zero_division=0)
