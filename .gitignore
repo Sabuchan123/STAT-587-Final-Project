@@ -8,3 +8,4 @@
 /PyScripts/*.csv
 /PyScripts/__pycache__
 /PyScripts/.devcontainer
+/PyScripts/Ignore/
