@@ -101,15 +101,9 @@ def load_hourly_data(parquet_file="hourly_data.parquet"):
     X_reset = X.reset_index(drop=True)
     spx_open_df = pd.DataFrame(spx_open_current[:X_reset.shape[0]], columns=['spx_open_current'])
 
-    day_of_week_full = pd.get_dummies(X.index.dayofweek, prefix='day_of_week', dtype=int)
-    day_of_week_dummies = day_of_week_full.iloc[:, 1:].reset_index(drop=True)
-
-    month_full = pd.get_dummies(X.index.month, prefix='month', dtype=int)
-    month_dummies = month_full.iloc[:, 1:].reset_index(drop=True)
-
     X_flat = X_reset.copy()
     X_flat.columns = ['_'.join(map(str, col)) for col in X_flat.columns]
-    X_combined = pd.concat([X_flat, spx_open_df, day_of_week_dummies, month_dummies], axis=1)
+    X_combined = pd.concat([X_flat, spx_open_df], axis=1)
 
     targets = {
         'binary': y_binary,
@@ -124,7 +118,7 @@ def load_hourly_data(parquet_file="hourly_data.parquet"):
     return X_combined.values, targets
 
 
-def create_lagged_features(X, y, n_lags=24, temporal_count=17):
+def create_lagged_features(X, y, n_lags=24, temporal_count=0):
     """
     Create lagged features from t-1 to t-n_lags for stock predictors, including SPX Open.
     Exclude only temporal dummy variables (day-of-week and month) from lagging.
@@ -150,7 +144,7 @@ def create_lagged_features(X, y, n_lags=24, temporal_count=17):
                      if 'day_of_week' in str(col) or 'month' in str(col)]
 
     # Fallback: assume last temporal_count columns are temporal dummies
-    if len(temporal_cols) == 0 and X_df.shape[1] >= temporal_count:
+    if len(temporal_cols) == 0 and temporal_count > 0 and X_df.shape[1] >= temporal_count:
         temporal_cols = list(X_df.columns[-temporal_count:])
 
     stock_cols = [col for col in X_df.columns if col not in temporal_cols]
@@ -198,7 +192,7 @@ def main():
     print("LOGISTIC REGRESSION WITH 24-HOUR LAGGED FEATURES")
     print("=" * 70)
     print("Task: Predict SPX binary direction (Up/Down)")
-    print("Features: Stock predictors lagged 24 hours + current temporal dummies")
+    print("Features: Stock predictors lagged 24 hours (temporal dummies temporarily excluded)")
     print("=" * 70 + "\n")
 
     start_time = time.perf_counter()
@@ -214,7 +208,7 @@ def main():
 
     # Create lagged features
     print("Creating 24-hour lagged features...")
-    X_lagged, y_lagged = create_lagged_features(X_raw, y, n_lags=24, temporal_count=17)
+    X_lagged, y_lagged = create_lagged_features(X_raw, y, n_lags=24, temporal_count=0)
 
     print(f"\nFinal lagged data shape: X={X_lagged.shape}, y={y_lagged.shape}")
 
@@ -325,7 +319,7 @@ def main():
         f.write(f"Total features: {X_train.shape[1]}\n")
         f.write(f"  - Current stock features: {X_train.shape[1] // 25}  (approximately)\n")
         f.write(f"  - Lagged stock features (24 lags): {(X_train.shape[1] // 25) * 24}  (approximately)\n")
-        f.write(f"  - Temporal features (day/month): 17\n\n")
+        f.write(f"  - Temporal features (day/month): 0 (temporarily excluded)\n\n")
         f.write(f"DATA SPLIT\n")
         f.write("-" * 70 + "\n")
         f.write(f"Train set: {X_train.shape[0]} samples (80%)\n")
@@ -442,7 +436,7 @@ def main():
         f.write(f"Total features: {X_train.shape[1]}\n")
         f.write(f"  - Current stock features: {X_train.shape[1] // 25}  (approximately)\n")
         f.write(f"  - Lagged stock features (24 lags): {(X_train.shape[1] // 25) * 24}  (approximately)\n")
-        f.write(f"  - Temporal features (day/month): 17\n")
+        f.write(f"  - Temporal features (day/month): 0 (temporarily excluded)\n")
         f.write(f"Note: L1 penalty performs feature selection (shrinks coefficients to 0)\n\n")
         f.write(f"DATA SPLIT\n")
         f.write("-" * 70 + "\n")
@@ -519,6 +513,123 @@ def main():
         f.write(f"Optimal C (L1): {log_reg_l1.C_[0]:.6f}\n")
 
     print(f"\n✓ Saved comparison to: {output_dir / 'logistic_regression_24hours_comparison.txt'}\n")
+
+    # ========================================================================
+    # ELASTIC NET LOGISTIC REGRESSION WITH 5-FOLD CV
+    # ========================================================================
+    print("\n" + "=" * 70)
+    print("LOGISTIC REGRESSION WITH ELASTIC NET PENALTY - 5-fold CV")
+    print("=" * 70 + "\n")
+
+    pipeline_en = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', LogisticRegressionCV(
+            Cs=10,
+            cv=cv,
+            penalty='elasticnet',
+            solver='saga',
+            l1_ratios=[0.1, 0.5, 0.9],
+            random_state=42,
+            max_iter=2000,
+            verbose=1,
+            n_jobs=-1
+        ))
+    ])
+
+    print("Training Logistic Regression (Elastic Net) with cross-validation...\n")
+    train_start_en = time.perf_counter()
+    pipeline_en.fit(X_train, y_train)
+    train_elapsed_en = time.perf_counter() - train_start_en
+
+    print(f"\n✓ Training completed in {train_elapsed_en:.1f} seconds ({train_elapsed_en/60:.2f} minutes)")
+
+    log_reg_en = pipeline_en.named_steps['classifier']
+    print(f"\nOptimal C parameter selected (Elastic Net): {log_reg_en.C_[0]:.6f}")
+    print(f"Selected l1_ratio (Elastic Net): {log_reg_en.l1_ratio_[0]:.2f}")
+
+    # Evaluate on test set
+    print("\n" + "=" * 70)
+    print("Evaluating Elastic Net model on test set...")
+    print("=" * 70 + "\n")
+
+    y_pred_en = pipeline_en.predict(X_test)
+    y_pred_proba_en = pipeline_en.predict_proba(X_test)[:, 1]
+
+    accuracy_en = accuracy_score(y_test, y_pred_en)
+    precision_en = precision_score(y_test, y_pred_en)
+    recall_en = recall_score(y_test, y_pred_en)
+    f1_en = f1_score(y_test, y_pred_en)
+    roc_auc_en = roc_auc_score(y_test, y_pred_proba_en)
+
+    print("Test set performance (Elastic Net penalty):")
+    print(f"Accuracy:  {accuracy_en:.4f}")
+    print(f"Precision: {precision_en:.4f}")
+    print(f"Recall:    {recall_en:.4f}")
+    print(f"F1-Score:  {f1_en:.4f}")
+    print(f"ROC-AUC:   {roc_auc_en:.4f}\n")
+
+    print("Classification Report (Elastic Net):")
+    print(classification_report(y_test, y_pred_en, target_names=['Down', 'Up']))
+
+    cm_en = confusion_matrix(y_test, y_pred_en)
+    print("\nConfusion Matrix (Elastic Net):")
+    print(f"               Predicted Down  Predicted Up")
+    print(f"Actual Down:   {cm_en[0,0]:>15} {cm_en[0,1]:>12}")
+    print(f"Actual Up:     {cm_en[1,0]:>15} {cm_en[1,1]:>12}\n")
+
+    # Plot confusion matrix (Elastic Net)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm_en, annot=True, fmt='d', cmap='Purples',
+                xticklabels=['Down', 'Up'], yticklabels=['Down', 'Up'],
+                cbar_kws={'label': 'Count'})
+    plt.title('Confusion Matrix - Logistic Regression Elastic Net (24-hour Lags)')
+    plt.ylabel('Actual')
+    plt.xlabel('Predicted')
+    plt.tight_layout()
+    plt.savefig(output_dir / 'logistic_regression_24hours_elasticnet_confusion_matrix.png', dpi=150, bbox_inches='tight')
+    plt.close()
+
+    # Save Elastic Net results
+    with open(output_dir / "logistic_regression_24hours_elasticnet_results.txt", 'w') as f:
+        f.write("=" * 70 + "\n")
+        f.write("LOGISTIC REGRESSION (ELASTIC NET PENALTY) WITH 24-HOUR LAGGED FEATURES\n")
+        f.write("=" * 70 + "\n\n")
+        f.write("MODEL CONFIGURATION\n")
+        f.write("-" * 70 + "\n")
+        f.write(f"Algorithm: Logistic Regression (Elastic Net regularization)\n")
+        f.write(f"Solver: saga\n")
+        f.write(f"Max iterations: 2000\n")
+        f.write(f"Cross-validation: 5-fold stratified\n")
+        f.write(f"Optimal C parameter: {log_reg_en.C_[0]:.6f}\n")
+        f.write(f"Selected l1_ratio: {log_reg_en.l1_ratio_[0]:.2f}\n\n")
+        f.write(f"FEATURES\n")
+        f.write("-" * 70 + "\n")
+        f.write(f"Total features: {X_train.shape[1]}\n")
+        f.write(f"  - Current stock features: {X_train.shape[1] // 25}  (approximately)\n")
+        f.write(f"  - Lagged stock features (24 lags): {(X_train.shape[1] // 25) * 24}  (approximately)\n")
+        f.write(f"  - Temporal features (day/month): 0 (temporarily excluded)\n\n")
+        f.write(f"DATA SPLIT\n")
+        f.write("-" * 70 + "\n")
+        f.write(f"Train set: {X_train.shape[0]} samples (80%)\n")
+        f.write(f"Test set: {X_test.shape[0]} samples (20%)\n")
+        f.write(f"Train target: Down={sum(y_train==0)}, Up={sum(y_train==1)}\n")
+        f.write(f"Test target: Down={sum(y_test==0)}, Up={sum(y_test==1)}\n\n")
+        f.write("TEST SET PERFORMANCE\n")
+        f.write("-" * 70 + "\n")
+        f.write(f"Accuracy:  {accuracy_en:.4f}\n")
+        f.write(f"Precision: {precision_en:.4f}\n")
+        f.write(f"Recall:    {recall_en:.4f}\n")
+        f.write(f"F1-Score:  {f1_en:.4f}\n")
+        f.write(f"ROC-AUC:   {roc_auc_en:.4f}\n\n")
+        f.write("Confusion Matrix:\n")
+        f.write("               Predicted Down  Predicted Up\n")
+        f.write(f"Actual Down:   {cm_en[0,0]:>15} {cm_en[0,1]:>12}\n")
+        f.write(f"Actual Up:     {cm_en[1,0]:>15} {cm_en[1,1]:>12}\n\n")
+        f.write("Classification Report:\n")
+        f.write(classification_report(y_test, y_pred_en, target_names=['Down', 'Up']))
+
+    print(f"✓ Saved Elastic Net confusion matrix plot: {output_dir / 'logistic_regression_24hours_elasticnet_confusion_matrix.png'}")
+    print(f"✓ Saved Elastic Net results to: {output_dir / 'logistic_regression_24hours_elasticnet_results.txt'}\n")
 
     # Total elapsed time
     total_elapsed = time.perf_counter() - start_time
