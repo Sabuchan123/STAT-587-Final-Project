@@ -25,24 +25,6 @@ def apply_PCA(X_train: pd.DataFrame, X_test: pd.DataFrame, n_comp: float|int =0.
     X_test_pca=pd.DataFrame(X_test, columns=pca_columns, index=X_test_index)
     return X_train_pca, X_test_pca
 
-def step_wise_reg_cv(X_train: pd.DataFrame, y_train: pd.DataFrame, X_test: pd.DataFrame, model) -> tuple[pd.DataFrame, pd.DataFrame]:
-    print("------- Applying Step-Wise Regression (CV)")
-    X_train_index=X_train.index
-    X_train_columns=X_train.columns
-    X_test_index=X_test.index
-    X_test_columns=X_test.columns
-    scaler=StandardScaler()
-    X_train=scaler.fit_transform(X_train)
-    X_test=scaler.transform(X_test)
-    X_train = pd.DataFrame(X_train, index=X_train_index, columns=X_train_columns)
-    X_test = pd.DataFrame(X_test, index=X_test_index, columns=X_test_columns)
-    print("Finished Scaling.")
-    mfs=MFS(model, (1, int(np.sqrt(X_train.shape[0]))), forward=True, floating=True, cv=3, n_jobs=-1)
-    mfs.fit(X_train, y_train)
-    selected_features=list(mfs.k_feature_names_)
-    print("Finished Applying Step-Wise Regression (CV) -------")
-    return X_train[selected_features], X_test[selected_features]
-
 def step_wise_reg_wfv(model, X_train: pd.DataFrame, y_train: pd.DataFrame, X_test: pd.DataFrame, n_splits: int =3) -> tuple[pd.DataFrame, pd.DataFrame]:
     print("------- Applying Step-Wise Regression (WFV)")
     tscv=TimeSeriesSplit(n_splits=3)

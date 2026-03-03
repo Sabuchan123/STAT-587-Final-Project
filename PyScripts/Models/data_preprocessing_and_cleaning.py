@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import pandas as pd
 import pyarrow.parquet as pq
-from PyScripts.helper_functions import get_cwd
+from helper_functions import get_cwd
 
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 8)
@@ -18,7 +18,7 @@ def clean_data():
     idx = pd.IndexSlice
 
     print("------- Downloading Data")
-    table = pq.read_table(cwd / "PyScripts" / "raw_data.parquet")
+    table = pq.read_table(cwd / "PyScripts" / "Data" / "raw_data_2_years.parquet")
     DATA = table.to_pandas()
     print("Finished Downloading Data -------")
     print("Initial shape:", DATA.shape[0], "rows,", DATA.shape[1], "columns.")
