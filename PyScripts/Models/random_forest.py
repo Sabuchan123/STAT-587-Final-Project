@@ -15,7 +15,7 @@ from model_evaluation import get_final_metrics_grid, rolling_window_backtest, cl
 VERBOSE=0
 
 if __name__=="__main__":
-    X, y_regression=cast(Any, clean_data())
+    X, y_regression=cast(Any, clean_data(cluster=True))
     X_train, X_test, y_train, y_test=train_test_split(X, y_regression, test_size=0.2, random_state=1)
     def to_binary_class(y):
         return (y>=0).astype(int)
@@ -24,93 +24,93 @@ if __name__=="__main__":
     y_test=to_binary_class(y_test)
     tscv=TimeSeriesSplit(n_splits=3)
     
-    # # ------- BASE APPLICATION -------
-    # print("\n\n------- Base RF Model -------")
-    # RFClassifier_base=RandomForestClassifier(random_state=1, n_jobs=-1)
+    # ------- BASE APPLICATION -------
+    print("\n\n------- Base RF Model -------")
+    RFClassifier_base=RandomForestClassifier(random_state=1, n_jobs=-1)
 
-    # RF_pipeline_base=Pipeline([('scaler', StandardScaler()), 
-    #                            ('classifier', RFClassifier_base)])
+    RF_pipeline_base=Pipeline([('scaler', StandardScaler()), 
+                               ('classifier', RFClassifier_base)])
 
-    # param_grid={
-    #     'classifier__max_depth': [2, 3, 5],
-    #     'classifier__n_estimators': [250, 500]
-    # }
-    # grid_search_base=GridSearchCV(RF_pipeline_base, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    # grid_search_base.fit(X_train, y_train)
+    param_grid={
+        'classifier__max_depth': [2, 3, 5],
+        'classifier__n_estimators': [250, 500]
+    }
+    grid_search_base=GridSearchCV(RF_pipeline_base, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    grid_search_base.fit(X_train, y_train)
 
-    # rolling_window_backtest(grid_search_base, X, y_regression, verbose=1)
+    rolling_window_backtest(grid_search_base, X, y_regression, verbose=1)
 
-    # get_final_metrics_grid(grid_search_base, X_test, y_test)
+    get_final_metrics_grid(grid_search_base, X_test, y_test)
 
-    # input("Press Enter to continue...")
+    input("Press Enter to continue...")
 
-    # # ------- PCA APPLICATION -------
-    # print("\n\n------- PCA RF Model -------")
-    # RFClassifier_PCA=RandomForestClassifier(random_state=1, n_jobs=-1)
+    # ------- PCA APPLICATION -------
+    print("\n\n------- PCA RF Model -------")
+    RFClassifier_PCA=RandomForestClassifier(random_state=1, n_jobs=-1)
 
-    # RF_pipeline_PCA=Pipeline([('scaler', StandardScaler()),
-    #                           ('reducer', PCA()),
-    #                           ('classifier', RFClassifier_PCA)])
+    RF_pipeline_PCA=Pipeline([('scaler', StandardScaler()),
+                              ('reducer', PCA()),
+                              ('classifier', RFClassifier_PCA)])
     
-    # param_grid={
-    #     'reducer__n_components': [0.8, 0.95],
-    #     'classifier__max_depth': [2, 3, 5],
-    #     'classifier__n_estimators': [250, 500]
-    # }
-    # grid_search_PCA=GridSearchCV(RF_pipeline_PCA, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    # grid_search_PCA.fit(X_train, y_train)
+    param_grid={
+        'reducer__n_components': [0.8, 0.95],
+        'classifier__max_depth': [2, 3, 5],
+        'classifier__n_estimators': [250, 500]
+    }
+    grid_search_PCA=GridSearchCV(RF_pipeline_PCA, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    grid_search_PCA.fit(X_train, y_train)
 
-    # rolling_window_backtest(grid_search_PCA, X, y_regression, verbose=1)
+    rolling_window_backtest(grid_search_PCA, X, y_regression, verbose=1)
 
-    # get_final_metrics_grid(grid_search_PCA, X_test, y_test)
+    get_final_metrics_grid(grid_search_PCA, X_test, y_test)
 
-    # input("Press Enter to continue...")
+    input("Press Enter to continue...")
 
-    # # ------- LASSO APPLICATION -------
-    # print("\n\n------- LASSO RF Model -------")
-    # lasso_selector=SelectFromModel(LogisticRegression(l1_ratio=1, solver='saga', random_state=1, max_iter=500, tol=5e-2), threshold='mean')
-    # RFClassifier_red_lasso=RandomForestClassifier(random_state=1, n_jobs=-1)
+    # ------- LASSO APPLICATION -------
+    print("\n\n------- LASSO RF Model -------")
+    lasso_selector=SelectFromModel(LogisticRegression(l1_ratio=1, solver='saga', random_state=1, max_iter=500, tol=5e-2), threshold='mean')
+    RFClassifier_red_lasso=RandomForestClassifier(random_state=1, n_jobs=-1)
 
-    # RF_pipeline_lasso=Pipeline([('scaler', StandardScaler()), 
-    #                           ('feature_selector', lasso_selector),
-    #                           ('classifier', RFClassifier_red_lasso)])
+    RF_pipeline_lasso=Pipeline([('scaler', StandardScaler()), 
+                              ('feature_selector', lasso_selector),
+                              ('classifier', RFClassifier_red_lasso)])
 
-    # param_grid={
-    #     'feature_selector__estimator__C': [0.001, 0.01, 0.1], 
-    #     'classifier__max_depth': [2, 3, 5],              
-    #     'classifier__n_estimators': [500]
-    # }
-    # grid_search_LASSO=GridSearchCV(RF_pipeline_lasso, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    # grid_search_LASSO.fit(X_train, y_train)
+    param_grid={
+        'feature_selector__estimator__C': [0.001, 0.01, 0.1], 
+        'classifier__max_depth': [2, 3, 5],              
+        'classifier__n_estimators': [500]
+    }
+    grid_search_LASSO=GridSearchCV(RF_pipeline_lasso, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    grid_search_LASSO.fit(X_train, y_train)
 
-    # rolling_window_backtest(grid_search_LASSO, X, y_regression, verbose=1)
+    rolling_window_backtest(grid_search_LASSO, X, y_regression, verbose=1)
 
-    # get_final_metrics_grid(grid_search_LASSO, X_test, y_test)
+    get_final_metrics_grid(grid_search_LASSO, X_test, y_test)
 
-    # input("Press Enter to continue...")
+    input("Press Enter to continue...")
 
-    # # ------- RIDGE APPLICATION -------
-    # print("\n\n------- RIDGE RF Model -------")
-    # ridge_selector=SelectFromModel(LogisticRegression(l1_ratio=0, solver="saga", random_state=1, max_iter=500, tol=5e-2), threshold='mean')
-    # RFClassifier_red_ridge=RandomForestClassifier(random_state=1, n_jobs=-1)
+    # ------- RIDGE APPLICATION -------
+    print("\n\n------- RIDGE RF Model -------")
+    ridge_selector=SelectFromModel(LogisticRegression(l1_ratio=0, solver="saga", random_state=1, max_iter=500, tol=5e-2), threshold='mean')
+    RFClassifier_red_ridge=RandomForestClassifier(random_state=1, n_jobs=-1)
 
-    # RF_pipeline_ridge=Pipeline([('scaler', StandardScaler()), 
-    #                           ('feature_selector', ridge_selector),
-    #                           ('classifier', RFClassifier_red_ridge)])
+    RF_pipeline_ridge=Pipeline([('scaler', StandardScaler()), 
+                              ('feature_selector', ridge_selector),
+                              ('classifier', RFClassifier_red_ridge)])
 
-    # param_grid={
-    #     'feature_selector__estimator__C': [0.001, 0.01, 0.1],
-    #     'classifier__max_depth': [2, 3, 5],              
-    #     'classifier__n_estimators': [500]
-    # }
-    # grid_search_ridge=GridSearchCV(RF_pipeline_ridge, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    # grid_search_ridge.fit(X_train, y_train)
+    param_grid={
+        'feature_selector__estimator__C': [0.001, 0.01, 0.1],
+        'classifier__max_depth': [2, 3, 5],              
+        'classifier__n_estimators': [500]
+    }
+    grid_search_ridge=GridSearchCV(RF_pipeline_ridge, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    grid_search_ridge.fit(X_train, y_train)
 
-    # rolling_window_backtest(grid_search_ridge, X, y_regression, verbose=1)
+    rolling_window_backtest(grid_search_ridge, X, y_regression, verbose=1)
 
-    # get_final_metrics_grid(grid_search_ridge, X_test, y_test)
+    get_final_metrics_grid(grid_search_ridge, X_test, y_test)
 
-    # input("Press Enter to continue...")
+    input("Press Enter to continue...")
 
     # ------- STEP-WISE REGRESSION APPLICATION -------
     print("\n\n------- LASSO(internal) -> STEP-WISE REGRESSION RF Model -------")

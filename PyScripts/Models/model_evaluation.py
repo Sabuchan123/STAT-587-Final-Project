@@ -72,9 +72,9 @@ def rolling_window_backtest(model, X, y, window_size=21, horizon=5, verbose=0):
         
         acc=classification_accuracy(y_test_roll, preds)
         results.append(acc)
-        if (verbose>0 and i%10): print(f"{current_step * 100 / total_iterations:.2f}% complete. True iteration: {i + 1 - window_size}")
+        if (verbose>0 and ((i%10) == 0)): print(f"{current_step * 100 / total_iterations:.2f}% complete. Current iteration: {current_step}, True iteration: {i + 1 - window_size}")
         
-    print(f"Average Rolling Accuracy (Test): {np.mean(results):.4f}")
+    print(f"Average Rolling Accuracy (Test): {np.mean(results):.4f} (±{np.std(results):.4f})")
     return results
 
 
