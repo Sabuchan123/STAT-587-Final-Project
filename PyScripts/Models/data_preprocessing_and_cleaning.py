@@ -10,13 +10,17 @@ pd.set_option('display.max_columns', 8)
 
 cwd = get_cwd("STAT-587-Final-Project")
 
-def clean_data(cluster: bool =False, n_clusters: int =100, sector: bool =False, corr: bool =False, corr_threshold: float =0.95, corr_level: int =1, testing: bool =False):
+def clean_data(lookback_period: int =5, lag_period: int =1, extra_features: bool =True, raw: bool =False, cluster: bool =False, n_clusters: int =100, sector: bool =False, corr: bool =False, corr_threshold: float =0.95, corr_level: int =1, testing: bool =False):
+    if (lookback_period < 5): 
+        if (lookback_period!=0):
+            raise ValueError("lookback_period must be greater than  or equal to 2.")
+    
     # Hyperparameters
-    lag=[1, 3, 7, 14]
-    ema_windows=[7, 14, 28]
-    vol_windows=[7, 14, 28]
-    max_min_windows=[7, 21]
-    rol_VWAP_windows=[7, 14, 21]
+    lag=[lag_period]
+    ema_windows=[lookback_period]
+    vol_windows=[lookback_period]
+    max_min_windows=[lookback_period]
+    rol_VWAP_windows=[lookback_period]
     idx=pd.IndexSlice
 
     table=None
@@ -88,83 +92,91 @@ def clean_data(cluster: bool =False, n_clusters: int =100, sector: bool =False, 
             print(f"---EXTRA---: (corr_level={corr_level}) Dropped {len(to_drop)} highly correlated stocks by closing percent change.")
             print("Current shape:", features.shape[0], "rows,", features.shape[1], "columns.")
 
-    features["Day of Week"]=features.index.dayofweek
-    print("Created Day of Week.")
-
     y_regression=((DATA.loc[:, idx['Close', 'Index', '^SPX']] - DATA.loc[:, idx['Open', 'Index', '^SPX']]) / DATA.loc[:, idx['Open', 'Index', '^SPX']]).rename("Target Regression").shift(-1)
     print("Created Target (Regression).")
 
-    High_=DATA.loc[:, idx['High', :, :]]
-    Low_=DATA.loc[:, idx['Low', :, :]]
-    features=pd.concat([features, pd.DataFrame(High_.values-Low_.values, index=High_.index, columns=High_.columns).rename(columns={'High': f"Daily Range"}, level=0)], axis=1)
-    print("Created Daily Range.")
+    if (extra_features and not raw):
+        features["Day of Week"]=features.index.dayofweek
+        print("---EXTRA---: Created Day of Week.")
+    
+        High_=DATA.loc[:, idx['High', :, :]]
+        Low_=DATA.loc[:, idx['Low', :, :]]
+        features=pd.concat([features, pd.DataFrame(High_.values-Low_.values, index=High_.index, columns=High_.columns).rename(columns={'High': f"Daily Range"}, level=0)], axis=1)
+        print("---EXTRA---: Created Daily Range.")
 
-    for metric in ['Close PC', 'Open PC', 'High PC', 'Low PC']:
-        for lag_period in lag:
-            features=pd.concat([features, features.loc[:, idx[metric, :, :]].shift(lag_period).rename(columns={metric: f"{metric} Lag {lag_period}"}, level=0)], axis=1)
-    print("Created Lag.")
+    if (not raw):
+        for metric in ['Close PC', 'Open PC']:
+            for lag_period in lag:
+                features=pd.concat([features, features.loc[:, idx[metric, :, :]].shift(lag_period).rename(columns={metric: f"{metric} Lag {lag_period}"}, level=0)], axis=1)
+        print("Created Lag.")
 
-    for metric in ['Close', 'Open', 'High', 'Low']:
-        for ema_window in ema_windows: 
-            features=pd.concat([features, features.loc[:, idx[metric, :, :]].ewm(span=ema_window, adjust=False).mean().rename(columns={metric: f"{metric} EMA {ema_window}"}, level=0)], axis=1)
-        for vol_window in vol_windows:
-            vol=features.loc[:, idx[metric, :, :]].rolling(window=vol_window).std()
-            ema=features.loc[:, idx[f"{metric} EMA {vol_window}", :, :]]
-            norm_vol=vol/ema.values
-            features=pd.concat([features, norm_vol.rename(columns={metric: f"{metric} VOL {vol_window}"}, level=0)], axis=1)
-    print("Created EMA and Rolling Volatility (Scaled).")
+        if (lookback_period != 0):
+            for metric in ['Close', 'Open']:
+                for ema_window in ema_windows: 
+                    features=pd.concat([features, features.loc[:, idx[metric, :, :]].ewm(span=ema_window, adjust=False).mean().rename(columns={metric: f"{metric} EMA {ema_window}"}, level=0)], axis=1)
+                for vol_window in vol_windows:
+                    vol=features.loc[:, idx[metric, :, :]].rolling(window=vol_window).std()
+                    ema=features.loc[:, idx[f"{metric} EMA {vol_window}", :, :]]
+                    norm_vol=vol/ema.values
+                    features=pd.concat([features, norm_vol.rename(columns={metric: f"{metric} VOL {vol_window}"}, level=0)], axis=1)
+            print("Created EMA and Rolling Volatility (Scaled).")
 
-    for max_min_window in max_min_windows:
-        features=pd.concat([features, features.loc[:, idx['High', :, :]].rolling(window=max_min_window).max().rename(columns={'High': f"MAX {max_min_window}"}, level=0)], axis=1)
-        features=pd.concat([features, features.loc[:, idx['Low', :, :]].rolling(window=max_min_window).min().rename(columns={'Low': f"MIN {max_min_window}"}, level=0)], axis=1)
+            for max_min_window in max_min_windows:
+                features=pd.concat([features, features.loc[:, idx['High', :, :]].rolling(window=max_min_window).max().rename(columns={'High': f"MAX {max_min_window}"}, level=0)], axis=1)
+                features=pd.concat([features, features.loc[:, idx['Low', :, :]].rolling(window=max_min_window).min().rename(columns={'Low': f"MIN {max_min_window}"}, level=0)], axis=1)
 
-    for metric in ['Close', 'Open', 'High', 'Low']:
-        for max_min_window in max_min_windows:
-            max_=features.loc[:, idx[f'MAX {max_min_window}', :, :]]
-            min_=features.loc[:, idx[f'MIN {max_min_window}', :, :]]
-            metric_=features.loc[:, idx[metric, :, :]]
-            # A case was noted when the max_ and min_ values are equal to each other. We can simply drop the relative stock to remove this.
-            is_zero = (max_.values - min_.values == 0)
-            if is_zero.any():
-                problem_tickers = max_.columns[is_zero.any(axis=0)].get_level_values(2).unique()
-                features.drop(columns=problem_tickers, level=2, inplace=True)
-                continue
-            max_min_channel_pos =(metric_.values-min_.values)/(max_.values-min_.values)
-            features=pd.concat([features, pd.DataFrame(max_min_channel_pos, index=features.index, columns=metric_.columns).rename(columns={metric: f'Channel Position {metric} {max_min_window}'}, level=0).ffill().fillna(0.5)], axis=1)
-    print("Created Max/Min Channel Positions/")
+            for metric in ['Close', 'Open']:
+                for max_min_window in max_min_windows:
+                    max_=features.loc[:, idx[f'MAX {max_min_window}', :, :]]
+                    min_=features.loc[:, idx[f'MIN {max_min_window}', :, :]]
+                    metric_=features.loc[:, idx[metric, :, :]]
+                    # A case was noted when the max_ and min_ values are equal to each other. We can simply drop the relative stock to remove this.
+                    is_zero = (max_.values - min_.values == 0)
+                    if is_zero.any():
+                        problem_tickers = max_.columns[is_zero.any(axis=0)].get_level_values(2).unique()
+                        features.drop(columns=problem_tickers, level=2, inplace=True)
+                        continue
+                    max_min_channel_pos =(metric_.values-min_.values)/(max_.values-min_.values)
+                    features=pd.concat([features, pd.DataFrame(max_min_channel_pos, index=features.index, columns=metric_.columns).rename(columns={metric: f'Channel Position {metric} {max_min_window}'}, level=0).ffill().fillna(0.5)], axis=1)
+            print("Created Max/Min Channel Positions/")
 
-    for max_min_window in max_min_windows:
-        features.drop(columns=[f"MAX {max_min_window}", f"MIN {max_min_window}"], level=0, inplace=True)
-    print("Cleaned up Unnecessary Columns.")
+            for max_min_window in max_min_windows:
+                features.drop(columns=[f"MAX {max_min_window}", f"MIN {max_min_window}"], level=0, inplace=True)
+            print("Cleaned up Unnecessary Columns.")
 
-    for rol_VWAP_window in rol_VWAP_windows:
-        typical_price=(features.loc[:, idx['High', :, :]].values + features.loc[:, idx['Low', :, :]].values + features.loc[:, idx['Close', :, :]].values)/3
-        volume=(features.loc[:, idx['Volume', :, :]])
-        price_volume=typical_price*volume.values
-        price_volume_rol_sum=pd.DataFrame(price_volume, index=features.index, columns=volume.columns).rolling(rol_VWAP_window).sum()
-        volume_rol_sum=volume.rolling(rol_VWAP_window).sum()
-        features=pd.concat([features, (price_volume_rol_sum / volume_rol_sum).rename(columns={'Volume': f'Rolling VWAP {rol_VWAP_window}'}, level=0)], axis=1)
-    print("Created Rolling Volume Weighted Average Price.")
+            for rol_VWAP_window in rol_VWAP_windows:
+                typical_price=(features.loc[:, idx['High', :, :]].values + features.loc[:, idx['Low', :, :]].values + features.loc[:, idx['Close', :, :]].values)/3
+                volume=(features.loc[:, idx['Volume', :, :]])
+                price_volume=typical_price*volume.values
+                price_volume_rol_sum=pd.DataFrame(price_volume, index=features.index, columns=volume.columns).rolling(rol_VWAP_window).sum()
+                volume_rol_sum=volume.rolling(rol_VWAP_window).sum()
+                features=pd.concat([features, (price_volume_rol_sum / volume_rol_sum).rename(columns={'Volume': f'Rolling VWAP {rol_VWAP_window}'}, level=0)], axis=1)
+            print("Created Rolling Volume Weighted Average Price.")
 
-    for rol_zscore_window in ema_windows:
-        for metric in ['Close', 'Open', 'High', 'Low']:
-            price=features.loc[:, idx[metric, :, :]]
-            EMA=features.loc[:, idx[f"{metric} EMA {rol_zscore_window}", :, :]]
-            Vol=features.loc[:, idx[f"{metric} VOL {rol_zscore_window}", :, :]]
-            z_score=(price.values-EMA.values)/Vol.values 
-            features=pd.concat([features, pd.DataFrame(z_score, index=features.index, columns=price.columns).rename(columns={metric: f"{metric} Z-Score {rol_zscore_window}"}, level=0)], axis=1)
-    print("Created Rolling Z-Score.")
+            for rol_zscore_window in ema_windows:
+                for metric in ['Close', 'Open']:
+                    price=features.loc[:, idx[metric, :, :]]
+                    EMA=features.loc[:, idx[f"{metric} EMA {rol_zscore_window}", :, :]]
+                    Vol=features.loc[:, idx[f"{metric} VOL {rol_zscore_window}", :, :]]
+                    z_score=(price.values-EMA.values)/Vol.values 
+                    features=pd.concat([features, pd.DataFrame(z_score, index=features.index, columns=price.columns).rename(columns={metric: f"{metric} Z-Score {rol_zscore_window}"}, level=0)], axis=1)
+            print("Created Rolling Z-Score.")
 
-    for metric in features.columns.get_level_values(0).unique():
-        if metric[:4] == "Open":
-            features=pd.concat([features, features.loc[:, idx[metric, :, :]].shift(-1).rename(columns={metric: f"{metric} Forward Lag"})], axis=1)
-    print("Created Open Metrics Forward Lag.")
+            for metric in ['Close', 'Open']:
+                for ema_window in ema_windows:
+                    features.drop(columns=[f"{metric} EMA {vol_window}"], level=0, inplace=True)
+            print("Cleaned up Unnecessary Columns.")
 
+        features=features.sort_index(axis=1)
+        features.drop(columns=["Close", "Open", "High", "Low"], inplace=True)
+        print("Cleaned up Unnecessary Columns.")
 
-    features=features.sort_index(axis=1)
-    features.drop(columns=["Close", "Open", "High", "Low"], inplace=True)
-    print("Cleaned up Unnecessary Columns.")
-
+    if (extra_features and not raw):
+        for metric in features.columns.get_level_values(0).unique():
+            if metric[:4] == "Open":
+                features=pd.concat([features, features.loc[:, idx[metric, :, :]].shift(-1).rename(columns={metric: f"{metric} Forward Lag"})], axis=1)
+        print("---EXTRA---: Created Open Metrics Forward Lag.")
+        
     y_regression = y_regression.to_frame()
     y_regression.columns = pd.MultiIndex.from_tuples([('Target', 'Index', 'Regression')])
     print("Created Target (Classification)")
@@ -177,7 +189,7 @@ def clean_data(cluster: bool =False, n_clusters: int =100, sector: bool =False, 
     X=X.drop(columns=['Target'], level=0)
 
     if (sector):
-        if (corr or cluster): print("!!!WARNING!!!: Since dimensionality was reduced before grouping by sector, the sector feature averages may no longer reflect the sector itself.")
+        if ((corr and corr_level != 2) or cluster): print("!!!WARNING!!!: Since dimensionality was reduced before grouping by sector, the sector feature averages may no longer reflect the sector itself.")
         lookup_df = pd.read_csv(cwd / "PyScripts" / "Data" / "stock_lookup_table.csv")
         sector_map = lookup_df.set_index('Ticker')['Sector'].to_dict()
 
@@ -186,7 +198,7 @@ def clean_data(cluster: bool =False, n_clusters: int =100, sector: bool =False, 
         
         X = X.T.groupby([metrics, sectors]).mean().T
         print("---EXTRA---: Grouped Features by Sector Averages.")
-        print("Current shape:", features.shape[0], "rows,", features.shape[1], "columns.")
+        print("Current shape:", X.shape[0], "rows,", X.shape[1], "columns.")
 
     if (corr and (corr_level == 2 or corr_level == 3)):
         cols_to_remove=[]

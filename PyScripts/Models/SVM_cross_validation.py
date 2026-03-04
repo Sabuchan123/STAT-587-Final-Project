@@ -2,20 +2,24 @@ import pandas as pd
 from data_preprocessing_and_cleaning import clean_data
 from sklearn.model_selection import train_test_split, GridSearchCV, TimeSeriesSplit
 from sklearn.svm import SVC
+from sklearn.base import clone
+from typing import Any, cast
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
 from helper_functions import get_cwd
+from model_evaluation import rolling_window_backtest, get_final_metrics, get_final_metrics_grid
 
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 8)
 cwd = get_cwd("STAT-587-Final-Project")
 
 # X, y=clean_data()
-X, y_regression = clean_data()
+X, y_regression=cast(Any, clean_data(lag_period=1, lookback_period=0, sector=True, corr=True, corr_level=2, testing=True))
 X_train, X_test, y_train, y_test=train_test_split(X, y_regression, test_size=0.2, random_state=1)
 def to_binary_class(y):
-    return (y>=0).astype(int).to_numpy()
+    return (y>=0).astype(int)
+y_classification=to_binary_class(y_regression)
 y_train=to_binary_class(y_train)
 y_test=to_binary_class(y_test)
 
@@ -31,18 +35,28 @@ pipeline = Pipeline([
 param_grid = [
     {
         'svc__kernel': ['linear'],
-        'svc__C': [0.01, 0.1, 1, 10]
+        'svc__C': [0.05, 0.1, 1, 10]
     },
     {
         'svc__kernel': ['rbf'],
         'svc__C': [0.1, 1, 10],
-        'svc__gamma': ['scale', 'auto', 0.001, 0.01]
+        'svc__gamma': ['scale', 'auto', 0.01, 0.1, 1]
     }
 ]
 
 tscv=TimeSeriesSplit(n_splits=3)
-grid = GridSearchCV(pipeline, param_grid, cv=tscv, scoring='balanced_accuracy', n_jobs=-2, verbose=3, return_train_score=True)
+grid = GridSearchCV(pipeline, param_grid, cv=tscv, scoring='balanced_accuracy', n_jobs=-1, verbose=1, return_train_score=True)
 grid.fit(X_train, y_train)
+
+optimized_base_=clone(grid.best_estimator_)
+optimized_base_.fit(X_train, y_train)
+
+rolling_window_backtest(optimized_base_, X, y_classification, verbose=1, window_size=120, horizon=21)
+
+optimized_base_=clone(grid.best_estimator_)
+optimized_base_.fit(X_train, y_train)
+
+get_final_metrics(optimized_base_, X_train, y_train, X_test, y_test)
 
 input("Press Enter to continue...")
 
