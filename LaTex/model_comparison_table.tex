@@ -3,6 +3,7 @@
 \caption{Comprehensive Model Performance Comparison for S\&P 500 Binary Direction Prediction}
 \label{tab:model_comparison}
 \small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{ROC-AUC} & \textbf{Notes} \\
@@ -28,7 +29,8 @@ PCA + Classifier & 0.5368 & 0.5660 & 0.7438 & 0.5167 & N/A & 41K$\to$PCA feature
 LASSO (Reduced) & 0.4632 & 0.5583 & 0.7049 & 0.5167 & N/A & Feature selection \\
 Ridge (Reduced) & 0.5158 & 0.6104 & 0.7951 & 0.5750 & N/A & Regularized \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \par\medskip
 \footnotesize
 \textbf{Notes:}

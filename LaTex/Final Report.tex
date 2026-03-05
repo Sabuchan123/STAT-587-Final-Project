@@ -6,6 +6,7 @@
 \usepackage{booktabs}		 
 \usepackage{a4wide}  
 \usepackage{graphicx} % for \scalebox
+\usepackage{subcaption} % for subfigures
 
 \usepackage{tabularx} 
 \usepackage{threeparttable}
@@ -74,84 +75,38 @@ The following heatmaps are created utilizing the engineered feature `Close PC' a
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.75\linewidth]{../output/2yrs_sector_correlation.png}
-    \caption{Pairwise Pearson correlation of mean daily returns (Close PC) across all GICS sectors,
-             computed over the sample period. Hierarchical clustering (Ward linkage) reorders
-             the axes to group sectors with similar return dynamics together.}
+    \includegraphics[width=0.45\linewidth]{../output/2yrs_sector_correlation.png}
+    \includegraphics[width=0.45\linewidth]{../output/2yrs_sector_sp500_correlation.png}
+    \caption{Correlation across sectors and that of each sector with the S\&P 500 daily return}
     \label{fig:sector-correlation}
 \end{figure}
 \FloatBarrier
 
+Figure \ref{fig:sector-correlation} shows the correlation of mean daily returns across all sectors \footnote{GICS: Global Industry Classification Standard - a standardized sector taxonomy developed jointly by MSCI and S\&P Dow Jones Indices. It groups companies into 11 sectors. See more at https://www.msci.com/gics}. Certain sectors, such as Technology, Healthcare, and Consumer Defensive, exhibit stronger positive correlations with each other while sectors like Utilities and Real Estate show weaker correlations with other sectors. In addition, the sectors' correlation with the S\&P 500 Index indicates that Technology, Healthcare, and Consumer Defensive sectors also have the strongest absolute correlations with the overall market while Utilities and Real Estate show weaker correlations.
+
+
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.85\linewidth]{../output/2yrs_sector_sp500_correlation.png}
-    \caption{Pearson correlation of each sector's mean daily return with the S\&P 500 daily return
-             ranked by absolute correlation magnitude. Bars highlighted
-             in green (Technology, Healthcare, Consumer Defensive) are the top 3 sectors most
-             strongly co-moving with the broader market.}
-    \label{fig:sector-sp500-corr}
+    \includegraphics[width=0.32\linewidth]{../output/2yrs_sector_Technology_clustered.png}
+    \includegraphics[width=0.32\linewidth]{../output/2yrs_sector_Healthcare_clustered.png} 
+    \includegraphics[width=0.32\linewidth]{../output/2yrs_sector_Consumer_Defensive_clustered.png}
+    \caption{Intra-sector correlation matrices for the top three sectors by absolute correlation with S\&P 500 returns. From left to right: Technology ($|r| = 0.116$), Healthcare ($|r| = 0.106$), and Consumer Defensive ($|r| = 0.097$) sectors. Hierarchical clustering reveals sub-groups of stocks with similar return dynamics. Warm colours indicate strong positive co-movement while cool colours indicate divergence.}
+    \label{fig:top-sectors}
 \end{figure}
 \FloatBarrier
 
-Figure \ref{fig:sector-correlation} shows the correlation of mean daily returns across all sectors \footnote{GICS: Global Industry Classification Standard - a standardized sector taxonomy developed jointly by MSCI and S\&P Dow Jones Indices. It groups companies into 11 sectors. See more at https://www.msci.com/gics}. Certain sectors, such as Technology, Healthcare, and Consumer Defensive, exhibit stronger positive correlations with each other while sectors like Utilities and Real Estate show weaker correlations with other sectors. In addition, the sectors' correlation with the S\&P 500 Index (Figure~\ref{fig:sector-sp500-corr}) indicates that Technology, Healthcare, and Consumer Defensive sectors also have the strongest absolute correlations with the overall market while Utilities and Real Estate show weaker correlations.
-
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.75\linewidth]{../output/2yrs_sector_Technology_clustered.png}
-    \caption{Intra-sector correlation matrix for the Technology sector (80 stocks, 2-year window).
-             Technology is the sector with the highest absolute correlation with SP500 returns
-             ($|r| = 0.116$). Stocks are ordered by hierarchical clustering; warm colours indicate
-             strong positive co-movement while cool colours indicate divergence.}
-    \label{fig:sector-tech}
-\end{figure}
-\FloatBarrier
+Figure \ref{fig:top-sectors} show the intra-sector correlation matrices for the Technology, Healthcare, and Consumer Defensive sectors, respectively. The tickers in those plots are sorted by hierarchical clustering, which reveals sub-groups of stocks that tend to move together, such as large-cap tech giants, semiconductor companies, and software firms. This suggests that certain segments within these sectors may be driving their overall correlation with the broader market. In addition, it suggest that there might be a high degree of redundancy in the data, which could pose challenges for traditional statistical methods and motivate the use of dimensionality reduction techniques or regularization.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.75\linewidth]{../output/2yrs_sector_Healthcare_clustered.png}
-    \caption{Intra-sector correlation matrix for the Healthcare sector (2-year window).
-             Healthcare ranks 2nd by absolute correlation with SP500 returns ($|r| = 0.106$).
-             Hierarchical clustering reveals sub-groups such as large-cap pharma, biotech,
-             and medical device companies.}
-    \label{fig:sector-healthcare}
-\end{figure}
-\FloatBarrier
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.75\linewidth]{../output/2yrs_sector_Consumer_Defensive_clustered.png}
-    \caption{Intra-sector correlation matrix for the Consumer Defensive sector (36 stocks, 2-year
-             window). Consumer Defensive ranks 3rd by absolute correlation with SP500 returns
-             ($|r| = 0.097$). Hierarchical clustering groups staples retailers, beverage firms,
-             and household product companies.}
-    \label{fig:sector-consumer-defensive}
-\end{figure}
-\FloatBarrier
-
-Figure \ref{fig:sector-tech}, \ref{fig:sector-healthcare}, and \ref{fig:sector-consumer-defensive} show the intra-sector correlation matrices for the Technology, Healthcare, and Consumer Defensive sectors, respectively. The tickers in those plots are sorted by hierarchical clustering, which reveals sub-groups of stocks that tend to move together, such as large-cap tech giants, semiconductor companies, and software firms. This suggests that certain segments within these sectors may be driving their overall correlation with the broader market. In addition, it suggest that there might be a high degree of redundancy in the data, which could pose challenges for traditional statistical methods and motivate the use of dimensionality reduction techniques or regularization.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.85\linewidth]{../output/2yrs_sector_volatility_over_time.png}
-    \caption{Rolling 21-day average cross-sectional volatility (standard deviation of daily returns)
-             for each GICS sector. Spikes correspond to broad
-             market stress events affecting multiple sectors simultaneously.}
+    \includegraphics[width=0.45\linewidth]{../output/2yrs_sector_volatility_over_time.png}
+    \includegraphics[width=0.45\linewidth]{../output/2yrs_smoothed_sector_volatility.png}
+    \caption{Sector volatility}
     \label{fig:sector-vol}
 \end{figure}
 \FloatBarrier
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.85\linewidth]{../output/2yrs_smoothed_sector_volatility.png}
-    \caption{Smoothed sector volatility obtained by applying a 40-day rolling mean to the
-             21-day rolling volatility series. The additional smoothing removes short-term noise
-             and highlights persistent structural differences in risk across sectors.}
-    \label{fig:sector-vol-smooth}
-\end{figure}
-\FloatBarrier
-
-Figure \ref{fig:sector-vol} and \ref{fig:sector-vol-smooth} show the rolling 21-day average cross-sectional volatility for each GICS sector and the smoothed version obtained by applying a 40-day rolling mean, respectively. The volatility series reveal that certain sectors, such as Energy and Financials, tend to exhibit higher volatility compared to others like Utilities and Consumer Staples. This support our earlier construction of volatility features for initially all stocks (before dimensionality reduction) rather than just a single index, as it suggests that there may be important information contained in the volatility of individual stocks that could contribute to predicting the overall market direction. In addition, the smoothed volatility series highlight persistent structural differences in risk across sectors, which could also be informative for prediction. Nevertheless, some similarity in these patterns across sectors suggest that dimensionality reduction techniques or regularization may be necessary to effectively capture the underlying structure of the data.
+Figure \ref{fig:sector-vol} shows the rolling 21-day average cross-sectional volatility for each GICS sector and the smoothed version obtained by applying a 40-day rolling mean. The volatility series reveal that certain sectors, such as Energy and Financials, tend to exhibit higher volatility compared to others like Utilities and Consumer Staples. This support our earlier construction of volatility features for initially all stocks (before dimensionality reduction) rather than just a single index, as it suggests that there may be important information contained in the volatility of individual stocks that could contribute to predicting the overall market direction. In addition, the smoothed volatility series highlight persistent structural differences in risk across sectors, which could also be informative for prediction. Nevertheless, some similarity in these patterns across sectors suggest that dimensionality reduction techniques or regularization may be necessary to effectively capture the underlying structure of the data.
 
 \section{Methods}
 As our data set is time series and has a large number of features compared to the number of data points, some methods prove to have more merits, namely random forest tree classification, support vector machine, and neural networks (CNN, simple RNN, LSTM). These methods, however, require a certain level of computational capacity, which is not very extensive giving our constraints of time and resources. At the same time, basic generalized linear model like logistic regression is still applicable with additional dimensional reduction technique (Ridge, LASSO, and PCA). We have not concluded which are 3 methods should be focus in this project. Instead, we provided all preliminary result and seek for further advices. 
@@ -182,18 +137,19 @@ Baseline model is RF, Logistic, SVM with indexes only.
 
 \subsubsection{Baseline Models with raw features}
 
-\subsubsubsection{Logistic Regression Models}
+\paragraph{Logistic Regression Models}
 \input{../output/base_logistic_comparison.tex}
 \FloatBarrier
 
-Table~\ref{tab:base-logistic-comparison} presents the performance comparison of baseline logistic regression models with different regularization and dimensional reduction techniques. Overall the accuracy is just around 50\%, which is only slightly better than random guessing. This suggests that the raw OHLCV features may not contain strong predictive signals for the market direction, and that the relationship between these features and the target variable is likely complex and non-linear. The regularization techniques (Ridge and LASSO) do not seem to significantly improve performance compared to the unregularized logistic regression. The PCA-based model performs worse than the other models, which could be due to the loss of potential information when reducing dimensionality. Overall, these results suggest that more sophisticated models or additional feature engineering may be necessary to achieve better predictive performance.
+Table~\ref{tab:base_logistic_comparison} presents the performance comparison of baseline logistic regression models with different regularization and dimensional reduction techniques. Overall the accuracy is just around 50\%, which is only slightly better than random guessing. This suggests that the raw OHLCV features may not contain strong predictive signals for the market direction, and that the relationship between these features and the target variable is likely complex and non-linear. The regularization techniques (Ridge and LASSO) do not seem to significantly improve performance compared to the unregularized logistic regression. The PCA-based model performs worse than the other models, which could be due to the loss of potential information when reducing dimensionality. Overall, these results suggest that more sophisticated models or additional feature engineering may be necessary to achieve better predictive performance.
 
 \subsubsection{Random Forest Models}
 
-Table~\ref{tab:base-rf-comparison} presents the performance comparison of different random forest models with predictors of raw features and of selected PCA components. The depth of the tree and number of estimators are selected based on grid search cross validation. The random forest using raw features outperforms the PCA-based logistic regression, and applying PCA before the random forest improves performance even further (accuracy in the test set increased to 54 \%). LASSO and Ridge application in feature selections for random forest does not improve performance compared to PCA. However, the standard deviation of both train and test cross validation accuracy is higher for the random forest compared to logistic regression, which suggests that the random forest may be more sensitive to the data set used to train. 
 
 \input{../output/base_rf_comparison.tex}
 \FloatBarrier
+
+Table~\ref{tab:base_rf_comparison} presents the performance comparison of different random forest models with predictors of raw features and of selected PCA components. The depth of the tree and number of estimators are selected based on grid search cross validation. The random forest using raw features outperforms the PCA-based logistic regression, and applying PCA before the random forest improves performance even further (accuracy in the test set increased to 54 \%). LASSO and Ridge application in feature selections for random forest does not improve performance compared to PCA. However, the standard deviation of both train and test cross validation accuracy is higher for the random forest compared to logistic regression, which suggests that the random forest may be more sensitive to the data set used to train. 
 
 
 \subsubsection{Extended Feature Models}
