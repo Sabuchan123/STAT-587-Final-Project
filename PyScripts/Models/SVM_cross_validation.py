@@ -16,7 +16,7 @@ cwd = get_cwd("STAT-587-Final-Project")
 
 # X, y=clean_data()
 X, y_regression=cast(Any, clean_data(lag_period=[1, 2, 3], lookback_period=0, sector=True, corr=True, corr_level=2, testing=True))
-X_train, X_test, y_train, y_test=train_test_split(X, y_regression, test_size=0.2, random_state=1)
+X_train, X_test, y_train, y_test=train_test_split(X, y_regression, test_size=0.2, random_state=1, shuffle=False)
 def to_binary_class(y):
     return (y>=0).astype(int)
 y_classification=to_binary_class(y_regression)
