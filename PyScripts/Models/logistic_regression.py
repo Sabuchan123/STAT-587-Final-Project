@@ -9,6 +9,7 @@ import numpy as np
 
 from H_prep import clean_data
 from H_eval import rolling_window_backtest, get_final_metrics
+from H_helpers import log_result, append_params_to_dict, get_cwd
 
 '''No need for hyperparameter tuning for Logistic Regression via GridSearchCV since LogisticRegressionCV performs internal CV to select the best C value. We will just use the default 10 values of C that LogisticRegressionCV tests.'''
 
@@ -16,12 +17,14 @@ VERBOSE=0
 WINDOW_SIZE=121
 HORIZON=21
 
+cwd=get_cwd("STAT-587-Final-Project")
+
 if __name__=="__main__":
-    X, y_regression=cast(Any, clean_data(lag_period=[1, 2, 3], lookback_period=0, sector=True, corr=True, corr_level=2, testing=False))
+    X, y_regression=cast(Any, clean_data(lag_period=[1, 2, 3], lookback_period=0, sector=True, corr=True, corr_level=2, testing=True))
     X_train, X_test, y_train, y_test=train_test_split(X, y_regression, test_size=0.2, random_state=1, shuffle=False)
     def to_binary_class(y):
         return (y>=0).astype(int)
-        
+
     y_classification=to_binary_class(y_regression)
     y_train=to_binary_class(y_train)
     y_test=to_binary_class(y_test)
@@ -41,17 +44,15 @@ if __name__=="__main__":
     Opt_Log_Reg_model_pipeline_R=Pipeline([('scaler', StandardScaler()), ('classifier', Opt_Log_Reg_R)])
 
     optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
-    optimized_Log_Reg_R_.fit(X_train, y_train)
-
-    coefs = optimized_Log_Reg_R_.named_steps['classifier'].coef_
-    print(f"Non-zero coefficients: {np.count_nonzero(coefs)}")
 
     rolling_window_backtest(optimized_Log_Reg_R_, X, y_classification, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
 
-    optimized_Log_Reg_R_=clone(optimized_Log_Reg_R_)
+    optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
     optimized_Log_Reg_R_.fit(X_train, y_train)
 
-    get_final_metrics(optimized_Log_Reg_R_, X_train, y_train, X_test, y_test, n_splits=10)
+    results=get_final_metrics(optimized_Log_Reg_R_, X_train, y_train, X_test, y_test, n_splits=10)
+    results=append_params_to_dict(results, clone(optimized_Log_Reg_R_))
+    log_result(results, cwd / 'output' / 'results', "results.csv")
 
     input("Press Enter to continue...")
 
@@ -68,10 +69,6 @@ if __name__=="__main__":
     Opt_Log_Reg_model_pipeline_L=Pipeline([('scaler', StandardScaler()), ('classifier', Opt_Log_Reg_L)])
 
     optimized_Log_Reg_L_=clone(Opt_Log_Reg_model_pipeline_L)
-    optimized_Log_Reg_L_.fit(X_train, y_train)
-
-    coefs = optimized_Log_Reg_L_.named_steps['classifier'].coef_
-    print(f"Non-zero coefficients: {np.count_nonzero(coefs)}")
 
     rolling_window_backtest(optimized_Log_Reg_L_, X, y_classification, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
 
@@ -86,7 +83,7 @@ if __name__=="__main__":
     Log_Reg_PCA_L=LogisticRegression(l1_ratio=0, solver='liblinear', random_state=1)
     
     Log_Reg_model_pipeline_PCA_L=Pipeline([('scaler', StandardScaler()),
-                                           ('pca', PCA(n_components=0.9)), 
+                                           ('pca', PCA()), 
                                            ('classifier', Log_Reg_PCA_L)])
 
     param_grid={
@@ -100,12 +97,10 @@ if __name__=="__main__":
     optimized_PCA_ridge_=grid_search_PCA_ridge.best_estimator_
 
     optimized_Log_Reg_PCA_ridge_=clone(grid_search_PCA_ridge.best_estimator_)
-    optimized_Log_Reg_PCA_ridge_.fit(X_train, y_train)
     
     rolling_window_backtest(optimized_Log_Reg_PCA_ridge_, X, y_classification, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
 
     optimized_Log_Reg_PCA_ridge_=clone(grid_search_PCA_ridge.best_estimator_)
-    optimized_Log_Reg_PCA_ridge_.fit(X_train, y_train)
 
     get_final_metrics(optimized_Log_Reg_PCA_ridge_, X_train, y_train, X_test, y_test, n_splits=10)
 
