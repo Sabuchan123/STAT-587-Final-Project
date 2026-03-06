@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 8)
 
-cwd = get_cwd("STAT-587-Final-Project")
+cwd=get_cwd("STAT-587-Final-Project")
 
 def clean_data(lookback_period: int =5, lag_period: list =[1], extra_features: bool =True, raw: bool =False, cluster: bool =False, n_clusters: int =100, sector: bool =False, corr: bool =False, corr_threshold: float =0.95, corr_level: int =1, testing: bool =False):
     if (lookback_period < 5): 

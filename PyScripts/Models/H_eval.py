@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import confusion_matrix
+import datetime
 
 
 def classification_accuracy(predictions, actuals) -> tuple[float, float]:
@@ -24,15 +25,19 @@ def display_feat_importances_tree(model, X: pd.DataFrame, n: int =50) -> None:
     plt.ylabel("Feature Name")
     plt.show()
 
+    return model_feature_df
+
 def display_coef_importances_regression(model, X: pd.DataFrame, n: int =50) -> None:
     importances=np.abs(model.coef_[0]) 
-    model_feature_df=pd.DataFrame({
+    model_coef_df=pd.DataFrame({
         'Feature': X.columns,
-        'Importance': importances
+        'Coef': importances
     }).sort_values(by='Importance', ascending=False)
-    model_feature_df.head(n=n).plot(kind='barh', x="Feature", y="Importance")
+    model_coef_df.head(n=n).plot(kind='barh', x="Feature", y="Coefficient")
     plt.gca().invert_yaxis()
     plt.show()
+
+    return model_coef_df
 
 def get_final_metrics(model_obj, X_train, y_train, X_test, y_test, n_splits: int =3):
     tscv=TimeSeriesSplit(n_splits=n_splits)
@@ -61,7 +66,12 @@ def get_final_metrics(model_obj, X_train, y_train, X_test, y_test, n_splits: int
     print(f"Positive Prediction Rate (Test):        {np.mean(preds)}")
     print(confusion_matrix(y_test, preds))  
 
+    model_name=model_obj.__class__.__name__
+    if (model_name=="Pipeline"):
+        model_name=model_obj.named_steps['classifier'].__class__.__name__
     return {
+        "model_name": model_name,
+        "time_ran": str(datetime.datetime.now()),
         "train_avg_accuracy": mean_train,
         "train_std_accuracy": std_train,
         "validation_avg_accuracy": mean_cv_test,
@@ -69,7 +79,11 @@ def get_final_metrics(model_obj, X_train, y_train, X_test, y_test, n_splits: int
         "validation_avg_precision": mean_test_precision,
         "validation_avg_recall": mean_test_recall,
         "test_split_accuracy": final_score,
-        "test_split_positive_prediction_rate": np.mean(preds)
+        "test_split_positive_prediction_rate": np.mean(preds),
+        "X_train_rows": X_train.shape[0],
+        "train_cols": X_train.shape[1],
+        "X_test_rows": X_test.shape[0],
+        "test_cols": X_test.shape[1]
     }
 
 def rolling_window_backtest(model, X, y, window_size=None, horizon=None, verbose=0):
@@ -99,27 +113,15 @@ def rolling_window_backtest(model, X, y, window_size=None, horizon=None, verbose
         model.fit(X_train_roll, y_train_roll)
         preds=model.predict(X_test_roll)
         
-        acc=classification_accuracy(y_test_roll, preds)
+        acc, _ =classification_accuracy(y_test_roll, preds)
         results.append(acc)
         if (verbose>0 and ((current_step%10) == 0)): print(f"{current_step * 100 / total_iterations:.2f}% complete. Current iteration: {current_step}, True iteration: {i + 1 - window_size}")
         
     print(f"Average Rolling Accuracy (Test): {np.mean(results):.4f} (±{np.std(results):.4f})")
     return results
 
-
-def classification_wfv_eval(model, X_train: pd.DataFrame, y_train: pd.DataFrame, n: int =24, max_train_size: int =21, test_size: int =5):
-    tscv=TimeSeriesSplit(n_splits=n, max_train_size=max_train_size, test_size=test_size)
-    scoring_metrics=['accuracy', 'precision', 'recall']
-    cv_scores=cross_val_score(model, X_train, y_train, cv=tscv, n_jobs=-1)
-    results=cross_validate(model, X_train, y_train, cv=tscv, scoring=scoring_metrics)
-
-    print(f"Average Accuracy:   {results['test_accuracy'].mean():.2%}")
-    print(f"Standard Deviation: {cv_scores.std() * 100:.2f}%")
-    print(f"Average Precision:  {results['test_precision'].mean():.2%}")
-    print(f"Average Recall:     {results['test_recall'].mean():.2%}")
-
-
-print 
+def display_wfv_results(results): # Needs train test split ratio to dictate when the data goes from being tested on data that it trained on to data that is new to the model.
+    pass
 
 class ModelResults:
     """Class to store and compare classification model results"""

@@ -11,11 +11,9 @@ from sklearn.pipeline import Pipeline
 
 from H_reduce import step_wise_reg_wfv
 from H_prep import clean_data
-from H_eval import rolling_window_backtest, get_final_metrics
+from H_eval import get_final_metrics_grid, rolling_window_backtest, get_final_metrics
 
 VERBOSE=0
-WINDOW_SIZE=121
-HORIZON=21
 
 if __name__=="__main__":
     X, y_regression=cast(Any, clean_data(lag_period=[1, 2, 3], lookback_period=0, sector=True, corr=True, corr_level=2, corr_threshold=0.95, testing=False)) # You can set cluster=True and sector=True for different variations.
@@ -42,9 +40,8 @@ if __name__=="__main__":
     grid_search_base.fit(X_train, y_train)
 
     optimized_base_=clone(grid_search_base.best_estimator_)
-    optimized_base_.fit(X_train, y_train)
 
-    rolling_window_backtest(optimized_base_, X, y_regression, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rolling_window_backtest(optimized_base_, X, y_regression, verbose=1, window_size=220, horizon=21)
 
     optimized_base_=clone(grid_search_base.best_estimator_)
     optimized_base_.fit(X_train, y_train)
@@ -70,9 +67,9 @@ if __name__=="__main__":
     grid_search_PCA.fit(X_train, y_train)
 
     optimized_PCA_=clone(grid_search_PCA.best_estimator_)
-    optimized_PCA_.fit(X_train, y_train)
 
-    rolling_window_backtest(optimized_PCA_, X, y_regression, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rolling_window_backtest(optimized_PCA_, X, y_regression, verbose=1, window_size=220, horizon=21)
+    
     optimized_PCA_=clone(grid_search_PCA.best_estimator_)
     optimized_PCA_.fit(X_train, y_train)
 
@@ -98,9 +95,8 @@ if __name__=="__main__":
     grid_search_LASSO.fit(X_train, y_train)
 
     optimized_LASSO_=clone(grid_search_LASSO.best_estimator_)
-    optimized_LASSO_.fit(X_train, y_train)
 
-    rolling_window_backtest(optimized_LASSO_, X, y_regression, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rolling_window_backtest(optimized_LASSO_, X, y_regression, verbose=1, window_size=220, horizon=21)
 
     optimized_LASSO_=clone(grid_search_LASSO.best_estimator_)
     optimized_LASSO_.fit(X_train, y_train)
@@ -127,9 +123,8 @@ if __name__=="__main__":
     grid_search_ridge.fit(X_train, y_train)
 
     optimized_ridge_=clone(grid_search_ridge.best_estimator_)
-    optimized_ridge_.fit(X_train, y_train)
 
-    rolling_window_backtest(optimized_ridge_, X, y_regression, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rolling_window_backtest(optimized_ridge_, X, y_regression, verbose=1, window_size=220, horizon=21)
 
     optimized_ridge_=clone(grid_search_ridge.best_estimator_)
     optimized_ridge_.fit(X_train, y_train)
@@ -174,7 +169,7 @@ if __name__=="__main__":
 
     RFClassifier_red_sw_wfv.fit(X_train_final, y_train)
 
-    rolling_window_backtest(RFClassifier_red_sw_wfv, X[X_train_final.columns], y_regression, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rolling_window_backtest(RFClassifier_red_sw_wfv, X[X_train_final.columns], y_regression, verbose=1, window_size=220, horizon=21)
 
     RFClassifier_red_sw_wfv.fit(X_train_final, y_train)
 
