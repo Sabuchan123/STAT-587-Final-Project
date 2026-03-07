@@ -16,12 +16,16 @@ if __name__ == "__main__":
     HORIZON=40
     EXPORT=True
     data_clean_params={
-        "lag_period": [1, 2],
+        "raw": False,
+        "extra_features": False,
+        "lag_period": [1, 2, 3],
         "lookback_period": 5,
-        "cluster": True,
+        "cluster": False,
+        "n_clusters": 100,
         "sector": True,
         "corr": True,
-        "corr_level": 3,
+        "corr_threshold": 0.95,
+        "corr_level": 2,
         "testing": False
     }
     download_params = {f"clean_data__{k}=": v for k, v in data_clean_params.items()}
@@ -61,12 +65,12 @@ if __name__ == "__main__":
 
     results=get_final_metrics(optimized_linear_, X_train, y_train, X_test, y_test, label="Linear Ker. SVM")
     if (EXPORT):
-        results=append_params_to_dict(results, clone(grid_search_linear.best_estimator_))
+        results=append_params_to_dict(results, grid_search_linear.best_estimator_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
 
-    # input("Press Enter to continue...")
+    input("Press Enter to continue...")
 
     # ------- RBF SVM -------
     print("\n\n------- RBF SVM Model -------")
@@ -92,12 +96,12 @@ if __name__ == "__main__":
 
     results=get_final_metrics(optimized_rbf_, X_train, y_train, X_test, y_test, label="RBF Ker. SVM")
     if (EXPORT):
-        results=append_params_to_dict(results, clone(grid_search_rbf.best_estimator_))
+        results=append_params_to_dict(results, grid_search_rbf.best_estimator_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
 
-    # input("Press Enter to continue...")
+    input("Press Enter to continue...")
 
     # ------- Polynomial SVM -------
     print("\n\n------- Polynomial SVM Model -------")
@@ -124,9 +128,9 @@ if __name__ == "__main__":
 
     results=get_final_metrics(optimized_poly_, X_train, y_train, X_test, y_test, label="Poly. Ker. SVM")
     if (EXPORT):
-        results=append_params_to_dict(results, clone(grid_search_poly.best_estimator_))
+        results=append_params_to_dict(results, grid_search_poly.best_estimator_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
 
-    # input("Press Enter to finish...")
+    input("Press Enter to finish...")

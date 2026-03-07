@@ -21,12 +21,16 @@ if __name__=="__main__":
     HORIZON=40
     EXPORT=True
     data_clean_params={
+        "raw": False,
+        "extra_features": False,
         "lag_period": [1, 2, 3],
         "lookback_period": 5,
         "cluster": False,
+        "n_clusters": 100,
         "sector": True,
         "corr": True,
-        "corr_level": 3,
+        "corr_threshold": 0.95,
+        "corr_level": 2,
         "testing": False
     }
     download_params = {f"clean_data__{k}=": v for k, v in data_clean_params.items()}
@@ -65,7 +69,7 @@ if __name__=="__main__":
 
     results=get_final_metrics(optimized_Log_Reg_R_, X_train, y_train, X_test, y_test, n_splits=10, label="LASSO(int.) Log. Reg.")
     if (EXPORT):
-        results=append_params_to_dict(results, clone(optimized_Log_Reg_R_))
+        results=append_params_to_dict(results, optimized_Log_Reg_R_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
@@ -93,7 +97,7 @@ if __name__=="__main__":
 
     results=get_final_metrics(optimized_Log_Reg_L_, X_train, y_train, X_test, y_test, n_splits=10, label="Ridge(int.) Log. Reg.")
     if (EXPORT):
-        results=append_params_to_dict(results, clone(optimized_Log_Reg_L_))
+        results=append_params_to_dict(results, optimized_Log_Reg_L_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
@@ -124,7 +128,7 @@ if __name__=="__main__":
 
     results=get_final_metrics(optimized_Log_Reg_PCA_ridge_, X_train, y_train, X_test, y_test, n_splits=10, label="PCA Ridge(int.) Log. Reg.")
     if (EXPORT):
-        results=append_params_to_dict(results, clone(optimized_Log_Reg_PCA_ridge_))
+        results=append_params_to_dict(results, optimized_Log_Reg_PCA_ridge_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")

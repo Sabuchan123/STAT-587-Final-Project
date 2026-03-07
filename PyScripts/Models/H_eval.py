@@ -6,7 +6,6 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import confusion_matrix
 import datetime
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import GridSearchCV
 
 from H_helpers import safe_div
 
@@ -193,77 +192,6 @@ class RollingWindowBacktest:
     def set(self, X: pd.DataFrame, y: pd.DataFrame):
         self.X=X
         self.y=y
-
-def rolling_window_backtest(model, X, y, window_size=None, horizon=None, verbose=0) -> tuple[list[float], list[float], dict]:
-    accuracy=[]
-    avg_direction=[]
-
-    if (window_size == None):
-        window_size=min(X.shape[1] * 2, X.shape[0] // 3)
-        if (window_size == (X.shape[0] // 3)):
-            print("!!!WARNING!!! Overfitting will most likely occur.")
-    if (horizon == None):
-        horizon=window_size // 4
-    elif (horizon > window_size): raise ValueError("horizon must be less than window_size")
-
-    n=len(X)
-    total_iterations = (n - horizon - window_size) // horizon + 1
-    if (verbose != 0): print(f"Rolling Window Backtest over {total_iterations} iterations.")
-    current_step=0
-    for i in range(window_size, n - horizon, horizon):
-        current_step += 1
-        X_train_roll=X.iloc[i-window_size : i]
-        y_train_roll=y.iloc[i-window_size : i]
-        
-        X_test_roll=X.iloc[i : i+horizon]
-        y_test_roll=y.iloc[i : i+horizon]
-        
-        model.fit(X_train_roll, y_train_roll)
-        preds=model.predict(X_test_roll)
-        
-        acc, _ =classification_accuracy(y_test_roll, preds)
-        accuracy.append(acc)
-        avg_direction.append(np.mean(preds))
-        if (verbose>0 and ((current_step%10) == 0)): print(f"{current_step * 100 / total_iterations:.2f}% complete. Current iteration: {current_step}, True iteration: {i + 1 - window_size}")
-        
-    print(f"Average Rolling Accuracy (Test): {np.mean(accuracy):.4f} (±{np.std(accuracy):.4f})")
-    return [accuracy, avg_direction, {
-        "mwfv_avg_accuracy": round(np.mean(accuracy), 3),
-        "mwfv_std_accuracy": round(np.std(accuracy), 3)
-    }]
-
-def display_wfv_results(results: list, X_train: pd.DataFrame, X_test: pd.DataFrame, window_size: int, horizon: int, extra_metrics: bool =True, comparison_metric: list =None) -> None: # Needs train test split ratio to dictate when the data goes from being tested on data that it trained on to data that is new to the model.
-    plt.figure(figsize=(12, 6))
-    n_train=len(X_train)
-    n_total=n_train + len(X_test)
-    start_of_each_test=list(range(window_size, n_total - horizon, horizon))
-    
-    plt.plot(start_of_each_test, results[0], marker='o', linestyle='-', label='Segment Accuracy')
-    plt.plot(start_of_each_test, results[1], color='gray',marker='o', linestyle='-', alpha=0.4, label='Prediction Direction')
-    plt.plot(start_of_each_test, [0.5 for i in range(len(start_of_each_test))], linestyle="--", label="Base Line")
-    if (extra_metrics):
-        plt.plot(start_of_each_test, [results[2]["mwfv_avg_accuracy"] for i in range(len(start_of_each_test))], color="#8EFF32", alpha=0.8, linestyle="--", label="Mean")
-        plt.plot(start_of_each_test, [results[2]["mwfv_avg_accuracy"] + results[2]["mwfv_std_accuracy"] for i in range(len(start_of_each_test))], color="#B8FF7D", alpha=0.5, linestyle="--", label="+std")
-        plt.plot(start_of_each_test, [results[2]["mwfv_avg_accuracy"] - results[2]["mwfv_std_accuracy"] for i in range(len(start_of_each_test))], color="#B8FF7D", alpha=0.5, linestyle="--", label="-std")
-
-    plt.axvspan(window_size, n_train, color='lightblue', alpha=0.3, label='In-Sample Rolling')
-    
-    plt.axvspan(n_train, n_total, color='#FFFACD', alpha=0.5, label='Out-of-Sample Test')
-
-    plt.axvline(x=n_train, color='r', linestyle='--', label='Train/Test Split Boundary')
-
-    plt.title("Rolling Window Backtest Accuracy")
-    plt.xlabel("Sample Index (Start of Test Horizon)")
-    plt.ylabel("Accuracy Rate")
-    plt.ylim(0, 1.05)
-    plt.grid(alpha=0.3)
-    plt.legend()
-    
-    plt.text(n_train * 0.5, 0.05, 'In-Sample Rolling', horizontalalignment='center', color='gray')
-    plt.text(n_train + (len(X_test) * 0.5), 0.05, 'Out-of-Sample Rolling', horizontalalignment='center', color='gray')
-    
-    plt.show()
-    plt.close('all')
 
 class ModelResults:
     """Class to store and compare classification model results"""
