@@ -25,13 +25,22 @@
 %---------------- Title Page ----------------%
 \begin{titlepage}
     \centering
-    \vspace*{2cm}
+    \vspace*{1.5cm}
     
-    {\LARGE \textbf{STAT 587: Final Project Report} \par}
-    \vspace{0.5cm}
-    {\Large Group 5 \par}
+    {\Large STAT 587 \par}
+    \vspace{0.3cm}
+    {\large Final Project Report \par}
     
-    \vspace{1.5cm}
+    \vspace{2cm}
+    
+    {\LARGE\bfseries Forecasting S\&P 500 Direction \par}
+    \vspace{0.4cm}
+    {\Large Historical Signals and Market Direction \par}
+    
+    \vspace{1.8cm}
+    
+    {\large Group 5 \par}
+    \vspace{1cm}
     
     {\large Trang Nguyen \par}
     {\large Takeshi Stormer \par}
@@ -72,7 +81,9 @@ One motivation for using only historical data is that market prices may already 
 \subsection{Dataset description}
 
 
-\quad \ The raw data was retrieved via Yahoo Finance's API \verb|yfinance|, containing the open price, close price, high price, low price, and traded volume for each stock. The data utilized contain information on stocks that are and/or were listed on the S\&P 500 index during the time period spanning January 1st, 2018, to December 31st, 2025. The cleaning process pertained to evaluating the data for change in tickers\endnote{this usually happens when one or more company merges with another company}, invalid data \endnote{for example, when a stock was in a frozen state}, holidays where the market was closed, and missing data due to being listed or delisted during the time frame. All the observations with missing information of any of the 5 price metrics or trading volume were removed.
+\quad \ The raw data was retrieved via Yahoo Finance's API \verb|yfinance|, containing the open price (OP), close price (CP), high price (HP), low price (LP), and traded volume (TV) for each stock. The data utilized contain information on stocks that are and/or were listed on the S\&P 500 index during the time period spanning January 1st, 2018, to December 31st, 2025. The cleaning process pertained to evaluating the data for change in tickers\endnote{this usually happens when one or more company merges with another company}, invalid data \endnote{for example, when a stock was in a frozen state}, holidays where the market was closed, and missing data due to being listed or delisted during the time frame. All the observations with missing information of any of the 5 price metrics or trading volume were removed.
+
+The raw data contains 2010 trading days and 2520 features. The sizable number of columns is explained by each stock (2010) and index (1) having their own price metrics for CP, OP, HP, LP and TV $([503+1] * 5)=2520$. The number of rows is explained by the exclusion of 19 holidays and 211 weekend days.
 
 The features are then modified to create additional engineered features that are commonly seen used in quantitative technical analysis and trading strategies. These features include lag values, day-to-day percent change, volatility, max/min channel position, rolling volume weighted average prices, rolling z-scores, daily range, and the day of the week. Details of formula for each variable generation is provided in the Appendix.%NEED TO ADD APPENDIX REFERENCE LATER. 
 
@@ -86,7 +97,6 @@ At the end of feature engineering, we remove most of the original data (OP, CP, 
 
 % At the end of our analysis, features involving non-stationary metrics (EMA, OP, CP, HP, LP, VWAP) are not included in the final model as they do not contribute to the prediction of the market direction. The final model will only include features that are stationary and have a significant impact on the prediction of the market direction.
 
-The raw data contains 501 rows, and 2520 columns. The sizable number of columns is explained by each stock (501) and index (1) having their own price metrics for CP, OP, HP, LP and TV $([503+1] * 5)=2520$. The number of rows is explained by the exclusion of 19 holidays and 211 weekend days.
 
 Overall, the data is characterized by a large number of features (columns) compared to the number of observations (rows), which can pose challenges for traditional statistical methods. Many engineered features are created based on raw features, leading to higher risk of multicollinearity problem. Additionally, the data is time series in nature, which means that there may be temporal dependencies and patterns that need to be accounted for in the analysis (such as what use was described for lag values). These characteristics of the data will influence the choice of methods and techniques used for forecasting and analysis in this project.
 

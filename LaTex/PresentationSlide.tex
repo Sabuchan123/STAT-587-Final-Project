@@ -26,10 +26,11 @@
 \usepackage{apacite}
 
 % --- Presentation info ---
-\title{Data Science - Final Project}
-\author{Trang Nguyen and Takeshi Stormer}
-\institute{PSU}
-\date{\today}
+\title[Forecasting S\&P 500 Direction]{Forecasting S\&P 500 Direction\\[0.3em]
+\large Historical Signals and Market Direction}
+\author{Trang Nguyen \and Takeshi Stormer}
+\institute{STAT 587: Data Science \\ Group 5 \\ Portland State University}
+\date{March 9th, 2026}
 
 % --- Remove default navigation symbols ---
 \setbeamertemplate{navigation symbols}{}
@@ -136,24 +137,6 @@
 
 
 \section{Introduction}
-\subsection{Research Question}
-\begin{frame}{Research Question}
-\begin{itemize}
-  \item Goal: Predicting the \textbf{direction} of the S\&P 500 Index.
-  \item Research Problem: Is there information in publicly available data that can be used to forecast market direction.
-  \item Modeling approach: Perform feature engineering and selection/dimensionality reduction on raw data; fit logistic regression, random forest classification and support vector machine models with optimal hyperparameter values obtained through iterative selection.
-  %Compare traditional statistical models (e.g., logistic regression) with modern statistical learning techniques (e.g., random forests, SVM, neural networks) to evaluate their predictive performance and implications for market efficiency
-\end{itemize}
-\end{frame}
-\subsection{Background}
-\begin{frame}{Background}
-\begin{itemize}
-  \item The \textbf{S\&P 500} index tracks the top 500 US companies by their \textbf{float-adjusted market capitalization (FMC)} and serves as the leading benchmark for the health of the US economy.
-  % \item Index values are computed using \textbf{float-adjusted market capitalization (FMC)}, so larger companies have a proportionally greater impact on the index
-  \item Forecasting the direction of the S\&P 500 Index is \textbf{complex}: the index point value is influenced by individual company performance, economic indicators, geopolitical events, and investor sentiment.
-  \item The data utilized is purely \textbf{historical}.
-\end{itemize}
-\end{frame}
 
 \subsection{Motivation}
 \begin{frame}{Motivation}
@@ -162,6 +145,29 @@
   \item Obtaining an edge in forecasting the market direction allows for traders to make more informed decisions about the economy and how they should position thier trade and order sizes.
 \end{itemize}
 \end{frame}
+
+\subsection{Research Question}
+\begin{frame}{Research Question}
+\begin{itemize}
+  \item Goal: Forecasting the \textbf{direction} of the S\&P 500 Index.
+  \item Research Problem: Is there information in price and volume that can be used to forecast market direction.
+  \item Modeling approach: Perform feature engineering and selection/dimensionality reduction on raw data; fit logistic regression, random forest classification and support vector machine models with optimal hyperparameter values obtained through iterative selection. %
+  %Compare traditional statistical models (e.g., logistic regression) with modern statistical learning techniques (e.g., random forests, SVM, neural networks) to evaluate their predictive performance and implications for market efficiency
+\end{itemize}
+\end{frame}
+\subsection{Background}
+\begin{frame}{Background}
+\begin{itemize}
+  \item \textbf{Weak-form EMH}: past prices/volume should not predict future returns; model performance tests weak-form efficiency.
+  \item The \textbf{S\&P 500} index tracks the top 500 US companies by their \textbf{float-adjusted market capitalization (FMC)} and serves as the leading benchmark for the health of the US economy.
+  % \item Index values are computed using \textbf{float-adjusted market capitalization (FMC)}, so larger companies have a proportionally greater impact on the index
+  \item Forecasting the direction of the S\&P 500 Index is \textbf{complex}: the index point value is influenced by individual company performance, economic indicators, geopolitical events, and investor sentiment.
+  \item The data utilized is purely \textbf{historical} prices and trading volume.
+\end{itemize}
+\end{frame}
+
+
+
 
 
 
