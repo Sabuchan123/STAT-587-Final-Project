@@ -7,6 +7,9 @@ from sklearn.preprocessing import StandardScaler
 
 from H_prep import clean_data
 from H_eval import rolling_window_backtest, get_final_metrics
+from H_helpers import log_result, append_grid_params_to_dict, get_cwd
+
+cwd=get_cwd("STAT-587-Final-Project")
 
 WINDOW_SIZE=121
 HORIZON=21
@@ -43,9 +46,11 @@ if __name__ == "__main__":
     optimized_linear_=clone(grid_search_linear.best_estimator_)
     optimized_linear_.fit(X_train, y_train)
 
-    get_final_metrics(optimized_linear_, X_train, y_train, X_test, y_test)
+    results=get_final_metrics(optimized_linear_, X_train, y_train, X_test, y_test)
+    results=append_grid_params_to_dict(results, grid_search_linear)
+    log_result(results, cwd / 'output' / 'results', "SVM_results.csv")
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     # ------- RBF SVM -------
     print("\n\n------- RBF SVM Model -------")
@@ -72,9 +77,11 @@ if __name__ == "__main__":
     optimized_rbf_=clone(grid_search_rbf.best_estimator_)
     optimized_rbf_.fit(X_train, y_train)
 
-    get_final_metrics(optimized_rbf_, X_train, y_train, X_test, y_test)
+    results=get_final_metrics(optimized_rbf_, X_train, y_train, X_test, y_test)
+    results=append_grid_params_to_dict(results, grid_search_rbf)
+    log_result(results, cwd / 'output' / 'results', "SVM_results.csv")
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     # ------- Polynomial SVM -------
     print("\n\n------- Polynomial SVM Model -------")
@@ -102,6 +109,8 @@ if __name__ == "__main__":
     optimized_poly_=clone(grid_search_poly.best_estimator_)
     optimized_poly_.fit(X_train, y_train)
 
-    get_final_metrics(optimized_poly_, X_train, y_train, X_test, y_test)
+    results=get_final_metrics(optimized_poly_, X_train, y_train, X_test, y_test)
+    results=append_grid_params_to_dict(results, grid_search_poly)
+    log_result(results, cwd / 'output' / 'results', "SVM_results.csv")
 
-    input("Press Enter to finish...")
+    # input("Press Enter to finish...")
