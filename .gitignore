@@ -11,7 +11,7 @@
 /PyScripts/*.csv
 **/__pycache__/
 /PyScripts/.devcontainer
-/PyScripts/cache
+/PyScripts/cache/
 
 # LaTeX build artifacts
 LaTex/*.aux
