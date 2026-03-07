@@ -3,28 +3,7 @@
 \usepackage[utf8]{inputenc}  
 \usepackage[english]{babel}    
 \usepackage{hyperref}        
-\usepackage{booktabs}		 
-\usepackage{a4wide}  
-\usepackage{graphicx} % for \scalebox
-\usepackage{subcaption} % for subfigures
-
-\usepackage{tabularx} 
-\usepackage{threeparttable}
-
-\usepackage[T1]{fontenc}
-
-\usepackage{placeins}
-
-
-
-
-\pagestyle{empty}            
-
-
-\documentclass[11pt]{article}
-\usepackage[utf8]{inputenc}  
-\usepackage[english]{babel}    
-\usepackage{hyperref}        
+\usepackage{apacite}
 \usepackage{booktabs}		 
 \usepackage{a4wide}  
 \usepackage{graphicx}
@@ -70,11 +49,9 @@
 
 \section{Introduction}
 
-Beyond the pursuit of generating infinite wealth by predicting the future values of the stock market (or inadvertently collapsing any concept of having a financial market to begin with), simply being content with being able to predict the direction of the market (emphasis on the US stock market) of the following day allows for individuals to trade and/or invest more wisely. The motivation behind understanding this problem, and subsequently attempting to solve it, is given by the consequences it could bring to the financial industry. 
+\quad Predicting the stock market is challenging yet crucial for investors, traders, and researchers \cite{LIN_2024}. Rather than aiming to predict exact future stock prices, this study focuses on the more practical goal of forecasting the next-day direction of the U.S. stock market using historical data on prices and trading volume. The motivation for studying this problem lies in its potential implications for the financial industry as well as economic discussion. 
 
-% In addition, there is an interesting discussion on how efficient the market is. If the market is efficient, then it should be impossible to predict the direction of the market with any amount of data. If the market is not efficient, then it should be possible to predict the direction of the market with some amount of data. The real world data might indicate a stage between the two extremes, which is also interesting to analyze: morderate past information may contribute to the forecasting of the market direction, but the predictive power of such data may diminish as more longer past values is added.
-
-This paper will shed some light as to whether or not there is public data that is adequate towards forecasting the direction of the US stock market, and if not, gives rise to the question of whether or not it is possible to find any amount of data that will.     
+The predictive performance of our models may inform the investors and policy makers about potential market reaction to previous trends. In addition, it also provide evidence on supporting or contradicting the Efficient Market Hypothesis. If our models achieve meaningful out-of-sample predictive accuracy using only such historical data, this would suggest that these variables contain some predictive content and would therefore be inconsistent with weak-form market efficiency. Conversely, if the models perform poorly, the results would be more consistent with weak-form market efficiency.
 
 \subsection{Research problem}
 
@@ -82,20 +59,24 @@ This paper will shed some light as to whether or not there is public data that i
 
 \subsection{Background context}
 
-\quad \ The S\&P 500 Index is a stock market index that measures the stock performance of the top 500 companies in terms of market capitalization listed on the stock exchanges in the United States. This index is one of the most commonly followed equity indices and is often used as a benchmark for the overall performance of the U.S. stock market. The index includes companies from various sectors, including technology, healthcare, financial services, consumer discretionary, and more. The S\&P 500 Index is widely regarded as a leading indicator of the health of the U.S. economy and is closely watched by investors, analysts, and policymakers.
+\quad According to \citeauthor{wolfers_2004}, the Efficient Market Hypothesis states that market prices fully reflect available information \endnote{The Efficient Market Hypothesis states that market prices fully reflect available information. The form of the hypothesis depends on the type of information incorporated into prices.In its strong form, prices reflect all information; in its semi-strong form, prices reflect all publicly available information; and in its weak form, prices reflect information contained in past prices and trading data.}. This implies that excess returns should not be systematically predictable from the relevant information set. Under the weak form of the Efficient Market Hypothesis\endnote{See the preceding endnote.}, historical price and trading-volume data should therefore not contain exploitable patterns for predicting future returns. If our models achieve meaningful out-of-sample predictive accuracy using only such historical data, this would suggest that these variables contain some predictive content and would therefore be inconsistent with weak-form market efficiency. Conversely, if the models perform poorly, the results would be more consistent with weak-form market efficiency.
+
+The S\&P 500 Index is a stock market index that measures the stock performance of the top 500 companies in terms of market capitalization listed on the stock exchanges in the United States \cite{spglobal_2024}. This index is one of the most commonly followed equity indices and is often used as a benchmark for the overall performance of the U.S. stock market. The index includes companies from various sectors, including technology, healthcare, financial services, consumer discretionary, and more. The S\&P 500 Index is widely regarded as a leading indicator of the health of the U.S. economy and is closely watched by investors, analysts, and policymakers \cite{investopedia_2024}.
 
 The computed valued of the index employs the float-adjusted market capitalization (FMC), which only takes into account the shares that are actually publicly traded on stock exchanges. This means that the companies with larger market caps are weighted more heavily, making the movements in their share price much more impactful on the broader index.
 
-Forecasting the stock market is a complex task that has been studied extensively in the field of finance and economics. However, given by the fact that the stock market is influenced by a wide range of factors beyond company performance, including economic indicators, geopolitical events, and investor sentiment, accurately predicting the direction of the stock market is challenging. There is no known single method that can guarantee absolute success, but assuredly many that have come just a bit further than their predecessors. This project will explore various statistical learning techniques to attempt to forecast the direction of the S\&P 500 Index, and evaluate their performance based on historical data.
+Stock market forecasting is a complex task that has been studied extensively in the field of finance and economics. However, because the stock market is influenced by a wide range of factors beyond company performance, including economic indicators, geopolitical events, and investor sentiment, accurately predicting the direction of the stock market is challenging. No single method is known to remain uniformly superior over time; rather, many newer approaches have offered modest improvements over earlier methods that were once widely used \cite{KUMBURE_2022}. This project will explore various recent statistical learning techniques to attempt to forecast the direction of the S\&P 500 Index, and evaluate their performance based on historical data.
 
-Part of the motivation for using historical data only is that the market already reflect reactions to economic and political environment, and part of the motivation is because the concurrent economic and political indexes affecting market are usually not available for the period of prediction. Futhermore, beside the interest of understanding the market, the key focus of this project is evaluating the performance of different statistical learning models within the context of less than perfect information situation.
+One motivation for using only historical data is that market prices may already incorporate responses to broader economic and political conditions. Moreover, the contemporaneous economic and political indicators that influence the market are often not available for the forecast period. Futhermore, the use of only historical data allows us to evaluate the predictive content of this information set, which is relevant for assessing the weak-form efficiency of the market as mentioned above.
 
 \subsection{Dataset description}
 
 
-\quad \ The raw data was retrieved via Yahoo Finance's API \verb|yfinance|, containing the open price, close price, high price, low price, and traded volume for each stock. The data utilized contain information on stocks that are and/or were listed on the S\&P 500 index during the time period spanning January 1st, 2018, to December 31st, 2025. The cleaning process pertained to evaluating the data for change in tickers (usually when one or more company merges with another company), invalid data (such as instances that indicated a stock was in a frozen state), holidays where the market was closed, and missing data due to being listed or delisted during the time frame. The resulting cleaned dataset should contain no NAs.
+\quad \ The raw data was retrieved via Yahoo Finance's API \verb|yfinance|, containing the open price, close price, high price, low price, and traded volume for each stock. The data utilized contain information on stocks that are and/or were listed on the S\&P 500 index during the time period spanning January 1st, 2018, to December 31st, 2025. The cleaning process pertained to evaluating the data for change in tickers\endnote{this usually happens when one or more company merges with another company}, invalid data \endnote{for example, when a stock was in a frozen state}, holidays where the market was closed, and missing data due to being listed or delisted during the time frame. All the observations with missing information of any of the 5 price metrics or trading volume were removed.
 
-The features are then modified to create additional engineered features that are commonly seen used in quantitative technical analysis and trading strategies. These features include lag values, day-to-day percent change, volatility, max/min channel position, rolling volume weighted average prices, rolling z-scores, daily range, and the day of the week. 
+The features are then modified to create additional engineered features that are commonly seen used in quantitative technical analysis and trading strategies. These features include lag values, day-to-day percent change, volatility, max/min channel position, rolling volume weighted average prices, rolling z-scores, daily range, and the day of the week. Details of formula for each variable generation is provided in the Appendix.%NEED TO ADD APPENDIX REFERENCE LATER. 
+
+%%%%%%%%%%%%%%%%%%%%%%END OF CONTENT REVISED at 1:50 am March 07th. LATER IS MINIMALLY REVISED, maby just reference included and some citation relating to PCA.%%%%%%%%%%%%%%%%%%%%%
 
 A little emphasis on lag is provided as follows: lag captures momentum, which allows the model to see if past data has any impact on future values. Unlike recurrent neural networks, all other base models, which are being considered in this paper, require lag values to be created before the training process since time-series isn't built directly into their architecture. Different lag periods will be used and the results will be compared to see if there is any significant difference in model performance. This feature is particularly important for statistical learning models that aren't traditional economic time-series analysis models, allowing us to capture the relationship between past and future values in a more flexible way.
 
@@ -154,9 +135,9 @@ As our data set is time series and has a large number of features compared to th
 
 \quad \ Since the data is time-series in fashion and has a large number of features compared to the number of data points by default, some methods of classification prove to be more forgiving, particularly random forest classification and support vector machines (SVMs). However, in certain scenarios, like an unconventionally large feature space, these methods require a large amount of computational capacity, which given by the projects constraints on time and resources, were not always feasible. These issues are mostly alleviated when dimension of the feature space is sufficiently reduced. With this, methods like logistic regression are still applicable.
 
-Furthermore, there exists quite a large amount of multicollinearity within the feature space, given straightforwardly by the fact that there are more features than observations, which needs to be addressed. This along with the issue of high dimensionality of the feature space can be addressed by certain dimensionality reduction and regularization methods include stepwise, LASSO and ridge regression, along with principal component analysis (PCA), collinearity reduction on stocks and features, grouping by sector averages and K-Means clustering. Each method provides different, or in some cases no, insight or interpretability of model results. Lastly, the data was scaled prior to fitting and subsequently predicting via StandardScaler implemented through a Pipeline (both provided through \verb|scikit-learn|).
+Furthermore, there exists quite a large amount of multicollinearity within the feature space, given straightforwardly by the fact that there are more features than observations, which needs to be addressed. This along with the issue of high dimensionality of the feature space can be addressed by certain dimensionality reduction and regularization methods include stepwise, LASSO and ridge regression, along with principal component analysis (PCA), collinearity reduction on stocks and features, grouping by sector averages and K-Means clustering\endnote{Among those, PCA and wavelet transform were the most popular methods used in literature, according to \citeauthor{KUMBURE_2022}}. Each method provides different, or in some cases no, insight or interpretability of model results. Lastly, the data was scaled prior to fitting and subsequently predicting via StandardScaler implemented through a Pipeline (both provided through \verb|scikit-learn|).
 
-It is good to note, before getting into the models that were utilized, that during implementation, different combinations of dimensionality reduction within the preprocessing of the data (such as the aforementioned grouping by sectors, or collinearity reduction) was applied to reduce computation time. Furthermore, in most cases, many different methods of dimensionality reduction and regularization were used to generate models differing in just that aspect. Lastly, in most cases (besides for when LogisticRegressionCV was used), \verb|GridSearchCV| was utilized to search for the optimal hyperparameters specific in dimensional reduction to each model type.
+It is good to note, before getting into the models that were utilized, that during implementation, different combinations of dimensionality reduction within the preprocessing of the data (such as the aforementioned grouping by sectors, or collinearity reduction) was applied to reduce computation time. In most cases of our analysis, many different methods of dimensionality reduction and regularization were used to generate models differing in just that aspect. Lastly, in most cases (besides for when LogisticRegressionCV was used), \verb|GridSearchCV| was utilized to search for the optimal hyperparameters specific in dimensional reduction to each model type.
 
 The first method to be employed is logistic regression. This model was available for use through \verb|scikit-learn| and had two variants: \verb|LogisticRegression| and \verb|LogisticRegressionCV|. In most cases, \verb|LogisticRegressionCV| was used to generate optimal $C$-values, and with a built in penalty flag for both ridge (L2) and LASSO (L1) (also including elasticnet), no external function was needed to reduce dimensionality prior to fitting the pipeline. However, in the case of the utilization of PCA, the ridge (L2) penalty was utilized internally after PCA was applied. In addition, the most basic logistic regression with PCA components and no regularization was also implemented for comparison.
 
@@ -258,8 +239,9 @@ n, so the best achievable generalization can decrease.
     \item \LaTeX \ folder: https://www.overleaf.com/read/bpdvnbmwzqhc\#6b670c
  \end{itemize}
 
-
-
+\section*{References}
+\bibliographystyle{apacite}
+\bibliography{Bibliography}
 \section*{Appendix}
 
 \begin{figure}[htbp]
