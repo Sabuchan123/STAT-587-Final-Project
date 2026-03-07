@@ -5,10 +5,9 @@ from sklearn.decomposition import PCA
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split, TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import Pipeline
-import numpy as np
 
 from H_prep import clean_data
-from H_eval import rolling_window_backtest, get_final_metrics, display_wfv_results
+from H_eval import get_final_metrics, RollingWindowBacktest
 from H_helpers import log_result, append_params_to_dict, get_cwd
 
 '''No need for hyperparameter tuning for Logistic Regression via GridSearchCV since LogisticRegressionCV performs internal CV to select the best C value. We will just use the default 10 values of C that LogisticRegressionCV tests.'''
@@ -48,7 +47,7 @@ if __name__=="__main__":
     custom_Cs=[0.05, 0.1, 1.0, 10.0]
 
     # ------- LASSO(Internal) APPLICATION -------
-    Log_Reg_R=LogisticRegressionCV(Cs=custom_Cs, cv=tscv, l1_ratios=[1], solver='saga', random_state=1, n_jobs=-1, max_iter=500, tol=1e-2, verbose=VERBOSE)
+    Log_Reg_R=LogisticRegressionCV(Cs=custom_Cs, cv=tscv, l1_ratios=[1], solver='saga', class_weight='balanced', random_state=1, n_jobs=-1, max_iter=500, tol=1e-2, verbose=VERBOSE)
     
     Log_Reg_model_pipeline_R=Pipeline([('scaler', StandardScaler()), ('classifier', Log_Reg_R)])
 
@@ -59,11 +58,9 @@ if __name__=="__main__":
 
     Opt_Log_Reg_model_pipeline_R=Pipeline([('scaler', StandardScaler()), ('classifier', Opt_Log_Reg_R)])
 
-    optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
-
-    wfv_results=rolling_window_backtest(optimized_Log_Reg_R_, X, y_classification, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
-
-    display_wfv_results(wfv_results, X_train, X_test, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_R), X, y_classification, WINDOW_SIZE, HORIZON)
+    rwb_obj.rolling_window_backtest(verbose=1)
+    rwb_obj.display_wfv_results(X_train)
 
     optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
     optimized_Log_Reg_R_.fit(X_train, y_train)
@@ -71,14 +68,14 @@ if __name__=="__main__":
     results=get_final_metrics(optimized_Log_Reg_R_, X_train, y_train, X_test, y_test, n_splits=10, label="LASSO(int.) Log. Reg.")
     if (EXPORT):
         results=append_params_to_dict(results, clone(optimized_Log_Reg_R_))
-        results.update(wfv_results[2])
+        results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
 
     input("Press Enter to continue...")
 
     # ------- RIDGE(Internal) APPLICATION -------
-    Log_Reg_L=LogisticRegressionCV(Cs=custom_Cs, cv=tscv, l1_ratios=[0], solver='saga', random_state=1, n_jobs=-1, max_iter=500, tol=1e-2, verbose=VERBOSE)
+    Log_Reg_L=LogisticRegressionCV(Cs=custom_Cs, cv=tscv, l1_ratios=[0], solver='saga', class_weight='balanced', random_state=1, n_jobs=-1, max_iter=500, tol=1e-2, verbose=VERBOSE)
     
     Log_Reg_model_pipeline_L=Pipeline([('scaler', StandardScaler()), ('classifier', Log_Reg_L)])
 
@@ -89,11 +86,9 @@ if __name__=="__main__":
 
     Opt_Log_Reg_model_pipeline_L=Pipeline([('scaler', StandardScaler()), ('classifier', Opt_Log_Reg_L)])
 
-    optimized_Log_Reg_L_=clone(Opt_Log_Reg_model_pipeline_L)
-
-    wfv_results=rolling_window_backtest(optimized_Log_Reg_L_, X, y_classification, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
-
-    display_wfv_results(wfv_results, X_train, X_test, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_L), X, y_classification, WINDOW_SIZE, HORIZON)
+    rwb_obj.rolling_window_backtest(verbose=1)
+    rwb_obj.display_wfv_results(X_train)
 
     optimized_Log_Reg_L_=clone(Opt_Log_Reg_model_pipeline_L)
     optimized_Log_Reg_L_.fit(X_train, y_train)
@@ -101,14 +96,14 @@ if __name__=="__main__":
     results=get_final_metrics(optimized_Log_Reg_L_, X_train, y_train, X_test, y_test, n_splits=10, label="Ridge(int.) Log. Reg.")
     if (EXPORT):
         results=append_params_to_dict(results, clone(optimized_Log_Reg_L_))
-        results.update(wfv_results[2])
+        results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
 
     input("Press Enter to continue...")
 
     # ------- PCA to Ridge(Internal) APPLICATION -------
-    Log_Reg_PCA_L=LogisticRegression(l1_ratio=0, solver='liblinear', random_state=1)
+    Log_Reg_PCA_L=LogisticRegression(l1_ratio=0, solver='liblinear', class_weight='balanced', random_state=1)
     
     Log_Reg_model_pipeline_PCA_L=Pipeline([('scaler', StandardScaler()),
                                            ('pca', PCA()), 
@@ -122,13 +117,9 @@ if __name__=="__main__":
 
     grid_search_PCA_ridge.fit(X_train, y_train)
 
-    optimized_PCA_ridge_=grid_search_PCA_ridge.best_estimator_
-
-    optimized_Log_Reg_PCA_ridge_=clone(grid_search_PCA_ridge.best_estimator_)
-    
-    wfv_results=rolling_window_backtest(optimized_Log_Reg_PCA_ridge_, X, y_classification, verbose=1, window_size=WINDOW_SIZE, horizon=HORIZON)
-
-    display_wfv_results(wfv_results, X_train, X_test, window_size=WINDOW_SIZE, horizon=HORIZON)
+    rwb_obj=RollingWindowBacktest(clone(grid_search_PCA_ridge.best_estimator_), X, y_classification, WINDOW_SIZE, HORIZON)
+    rwb_obj.rolling_window_backtest(verbose=1)
+    rwb_obj.display_wfv_results(X_train)
 
     optimized_Log_Reg_PCA_ridge_=clone(grid_search_PCA_ridge.best_estimator_)
     optimized_Log_Reg_PCA_ridge_.fit(X_train, y_train)
@@ -136,7 +127,7 @@ if __name__=="__main__":
     results=get_final_metrics(optimized_Log_Reg_PCA_ridge_, X_train, y_train, X_test, y_test, n_splits=10, label="PCA Ridge(int.) Log. Reg.")
     if (EXPORT):
         results=append_params_to_dict(results, clone(optimized_Log_Reg_PCA_ridge_))
-        results.update(wfv_results[2])
+        results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'output' / 'results', "results.csv")
 
