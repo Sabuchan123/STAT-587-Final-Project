@@ -23,10 +23,10 @@ if __name__ == "__main__":
     parameters_={
         "raw": False,
         "extra_features": False,
-        "lag_period": [1, 2, 3],
-        "lookback_period": 5,
+        "lag_period": 2,
+        "lookback_period": 7,
         "sector": True,
-        "corr_threshold": 0.95,
+        "corr_threshold": 0.8,
         "corr_level": 2,
     }
 
