@@ -26,7 +26,7 @@ if __name__=="__main__":
     # testing: bool =False, extra_features: bool =True, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0
     DATA=import_data(extra_features=True, testing=False, cluster=False, n_clusters=100, corr_threshold=0.95, corr_level=0)
 
-    FIND_OPTIMAL=False
+    FIND_OPTIMAL=True
     W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
 
     parameters_={  # These are optimal as of 3/8/2026 4:00 PM w=4
@@ -48,7 +48,7 @@ if __name__=="__main__":
         param_grid={
             'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3], [1, 2, 3, 4], [2, 3, 4, 5], [2, 3, 4]],
             'sector': [True],
-            'corr_level': [2]
+            'corr_level': [0]
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
@@ -59,9 +59,9 @@ if __name__=="__main__":
 
         print("------- Finding Optimal lookback_period Value")
         param_grid={
-            'lookback_period': [7, 10, 14, 17, 21, 24, 28],
+            'lookback_period': [0, 7, 10, 14, 17, 21, 28],
             'sector': [True],
-            'corr_level': [2]
+            'corr_level': [0]
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
@@ -73,7 +73,7 @@ if __name__=="__main__":
         # ------- Selection of Optimal data_clean() Parameters -------
         print("------- Finding Optimal data_clean() Parameters")
         param_grid={
-            'raw': [True, False],
+            'raw': [False],
             'extra_features': [True, False],
             'lag_period': [best_lag],
             'lookback_period': [best_lookback],

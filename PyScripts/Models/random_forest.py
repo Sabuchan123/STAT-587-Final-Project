@@ -51,7 +51,7 @@ if __name__=="__main__":
         param_grid={
             'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3], [1, 2, 3, 4], [2, 3, 4, 5], [2, 3, 4]],
             'sector': [True],
-            'corr_level': [2]
+            'corr_level': [0]
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
@@ -62,9 +62,9 @@ if __name__=="__main__":
 
         print("------- Finding Optimal lookback_period Value")
         param_grid={
-            'lookback_period': [7, 10, 14, 17, 21, 24, 28],
+            'lookback_period': [0, 7, 10, 14, 17, 21, 28],
             'sector': [True],
-            'corr_level': [2]
+            'corr_level': [0]
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)

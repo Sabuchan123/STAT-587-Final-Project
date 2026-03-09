@@ -270,35 +270,36 @@ def efficient_clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, sector:
     elif (met == 'lookback_period'):
         lookback_period=kwargs['lookback_period']
         new_columns=[]
-        for metric in ['Close', 'Open']:
-            price=DATA.loc[:, idx[metric, :, :]]
-            vol=price.rolling(window=lookback_period).std()
-            ema=price.ewm(span=lookback_period, adjust=False).mean()
-            norm_vol=vol/ema.values
-            z_score=np.full_like(price.values, 0.0)
-            np.divide((price.values - ema.values), vol.values, out=z_score, where=(vol.values > 0))
-            new_columns.append(norm_vol.rename(columns={metric: f"{metric} VOL {lookback_period}"}, level=0))
-            new_columns.append(pd.DataFrame(z_score, index=DATA.index, columns=price.columns).rename(columns={metric: f"{metric} Z-Score {lookback_period}"}, level=0))
-        print("Created EMA, Rolling Volatility (Scaled) and Rolling Z-Score.")
+        if (lookback_period != 0):
+            for metric in ['Close', 'Open']:
+                price=DATA.loc[:, idx[metric, :, :]]
+                vol=price.rolling(window=lookback_period).std()
+                ema=price.ewm(span=lookback_period, adjust=False).mean()
+                norm_vol=vol/ema.values
+                z_score=np.full_like(price.values, 0.0)
+                np.divide((price.values - ema.values), vol.values, out=z_score, where=(vol.values > 0))
+                new_columns.append(norm_vol.rename(columns={metric: f"{metric} VOL {lookback_period}"}, level=0))
+                new_columns.append(pd.DataFrame(z_score, index=DATA.index, columns=price.columns).rename(columns={metric: f"{metric} Z-Score {lookback_period}"}, level=0))
+            print("Created EMA, Rolling Volatility (Scaled) and Rolling Z-Score.")
 
-        rolling_High_=DATA.loc[:, idx['High', :, :]].rolling(window=lookback_period).max().rename(columns={'High': f"MAX {lookback_period}"}, level=0)
-        rolling_Low_=DATA.loc[:, idx['Low', :, :]].rolling(window=lookback_period).min().rename(columns={'Low': f"MIN {lookback_period}"}, level=0)
+            rolling_High_=DATA.loc[:, idx['High', :, :]].rolling(window=lookback_period).max().rename(columns={'High': f"MAX {lookback_period}"}, level=0)
+            rolling_Low_=DATA.loc[:, idx['Low', :, :]].rolling(window=lookback_period).min().rename(columns={'Low': f"MIN {lookback_period}"}, level=0)
 
-        for metric in ['Close', 'Open']:
-            price=DATA.loc[:, idx[metric, :, :]]
-            max_min_channel_pos=np.full_like(price.values, 0.5)
-            diff=rolling_High_.values - rolling_Low_.values
-            np.divide((price.values-rolling_Low_.values), diff, out=max_min_channel_pos, where=(diff != 0))
-            new_columns.append(pd.DataFrame(max_min_channel_pos, index=DATA.index, columns=price.columns).rename(columns={metric: f'Channel Position {metric} {lookback_period}'}, level=0))
-        print("Created Max/Min Channel Positions/")
+            for metric in ['Close', 'Open']:
+                price=DATA.loc[:, idx[metric, :, :]]
+                max_min_channel_pos=np.full_like(price.values, 0.5)
+                diff=rolling_High_.values - rolling_Low_.values
+                np.divide((price.values-rolling_Low_.values), diff, out=max_min_channel_pos, where=(diff != 0))
+                new_columns.append(pd.DataFrame(max_min_channel_pos, index=DATA.index, columns=price.columns).rename(columns={metric: f'Channel Position {metric} {lookback_period}'}, level=0))
+            print("Created Max/Min Channel Positions/")
 
-        typical_price=(DATA.loc[:, idx['High', :, :]].values + DATA.loc[:, idx['Low', :, :]].values + DATA.loc[:, idx['Close', :, :]].values)/3
-        volume=(DATA.loc[:, idx['Volume', :, :]])
-        price_volume=typical_price*volume.values
-        price_volume_rol_sum=pd.DataFrame(price_volume, index=DATA.index, columns=volume.columns).rolling(lookback_period).sum()
-        volume_rol_sum=volume.rolling(lookback_period).sum()
-        new_columns.append((price_volume_rol_sum / volume_rol_sum).rename(columns={'Volume': f'Rolling VWAP {lookback_period}'}, level=0))
-        print("Created Rolling Volume Weighted Average Price.")
+            typical_price=(DATA.loc[:, idx['High', :, :]].values + DATA.loc[:, idx['Low', :, :]].values + DATA.loc[:, idx['Close', :, :]].values)/3
+            volume=(DATA.loc[:, idx['Volume', :, :]])
+            price_volume=typical_price*volume.values
+            price_volume_rol_sum=pd.DataFrame(price_volume, index=DATA.index, columns=volume.columns).rolling(lookback_period).sum()
+            volume_rol_sum=volume.rolling(lookback_period).sum()
+            new_columns.append((price_volume_rol_sum / volume_rol_sum).rename(columns={'Volume': f'Rolling VWAP {lookback_period}'}, level=0))
+            print("Created Rolling Volume Weighted Average Price.")
 
         DATA.drop(columns=["Close", "Open", "High", "Low"], level=0, inplace=True)
         DATA=DATA.sort_index(axis=1)
