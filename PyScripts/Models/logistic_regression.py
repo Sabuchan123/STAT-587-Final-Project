@@ -26,16 +26,16 @@ if __name__=="__main__":
     # testing: bool =False, extra_features: bool =True, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0
     DATA=import_data(extra_features=True, testing=False, cluster=False, n_clusters=100, corr_threshold=0.95, corr_level=0)
 
-    FIND_OPTIMAL=True
+    FIND_OPTIMAL=False
     W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
 
-    parameters_={  # These are optimal as of 3/8/2026 4:00 PM w=4
+    parameters_={  # These are optimal as of 3/9/2026 4:00 AM w=4
         "raw": False,
-        "extra_features": True,
-        "lag_period": 2,
-        "lookback_period": 7,
+        "extra_features": False,
+        "lag_period": [1, 2, 3],
+        "lookback_period": 21,
         "sector": True,
-        "corr_threshold": 0.8,
+        "corr_threshold": 0.9,
         "corr_level": 2
     }
 
@@ -52,7 +52,7 @@ if __name__=="__main__":
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lag_period")
+        display_bias_variance_tradeoff(for_display, key="lag_period", label='log_reg')
         best_lag=best_parameters['lag_period']
         print(f"Best Utility Score (lag_period): {best_score}")
         print(f"Best lag_period: {best_lag}")
@@ -65,7 +65,7 @@ if __name__=="__main__":
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lookback_period")
+        display_bias_variance_tradeoff(for_display, key="lookback_period", label='log_reg')
         best_lookback=best_parameters['lookback_period']
         print(f"Best Utility Score (lookback_period): {best_score}")
         print(f"Best lookback_period: {best_lookback}")
@@ -110,7 +110,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_R), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="LR_LASSO")
 
     optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
     optimized_Log_Reg_R_.fit(X_train, y_train)
@@ -142,7 +142,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_L), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="LR_Ridge")
 
     optimized_Log_Reg_L_=clone(Opt_Log_Reg_model_pipeline_L)
     optimized_Log_Reg_L_.fit(X_train, y_train)
@@ -177,7 +177,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_PCA_ridge.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="LR_PCA_Ridge")
 
     optimized_Log_Reg_PCA_ridge_=clone(grid_search_PCA_ridge.best_estimator_)
     optimized_Log_Reg_PCA_ridge_.fit(X_train, y_train)

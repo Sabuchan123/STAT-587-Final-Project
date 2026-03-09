@@ -177,7 +177,7 @@ class RollingWindowBacktest:
             "mwfv_test_std_accuracy": round(test_std_accuracy, 3)
         }]
     
-    def display_wfv_results(self, extra_metrics: bool =True, comparison_metric: list =None) -> None:
+    def display_wfv_results(self, extra_metrics: bool =True, label: str | None =None) -> None:
         plt.figure(figsize=(12, 6))
         n_train=len(self.X_train)
         n_total=len(self.X)
@@ -214,6 +214,8 @@ class RollingWindowBacktest:
         plt.text(n_train * 0.5, 0.05, 'In-Sample Rolling', horizontalalignment='center', color='gray')
         plt.text(((n_total + n_train) * 0.5), 0.05, 'Out-of-Sample Rolling', horizontalalignment='center', color='gray')
         
+        plt.savefig
+        plt.savefig(f'../{label}_rwv_display.png', dpi=600, bbox_inches="tight")
         plt.show()
         plt.close('all')
 
@@ -225,12 +227,12 @@ class RollingWindowBacktest:
 def utility_score(results: dict, rwb: dict, w: float =4.0):
     train_cv_CoV=results['train_std_accuracy'] / results['train_avg_accuracy']
     val_cv_CoV=results['validation_std_accuracy'] / results['validation_avg_accuracy']
-    train_rwb_CoV=rwb.results[2]['mwfv_train_std_accuracy'] / rwb.results[2]['mwfv_train_avg_accuracy']
+    train_rwb_CoV=rwb.results[2]['mwfv_train_std_accuracy'] / rwb.results[2]['mwfv_train_avg_accuracy'] 
     test_rwb_CoV=rwb.results[2]['mwfv_test_std_accuracy'] / rwb.results[2]['mwfv_test_avg_accuracy']
     score=(results['test_split_accuracy'] + results['test_up_recall'] + results['test_down_recall'] + results['test_matthew_corr_coef'] - 1.5) - (1 / w) * (train_cv_CoV + train_rwb_CoV + val_cv_CoV + test_rwb_CoV)
     return score
 
-def display_bias_variance_tradeoff(results: pd.DataFrame, key: str):
+def display_bias_variance_tradeoff(results: pd.DataFrame, key: str, label: str | None =None):
     results_plot=results[[key, 'score']].copy()
     sort_key=results_plot[key].map(lambda x: max(x) if isinstance(x, list) else x)
     results_plot=results_plot.iloc[sort_key.argsort()]
@@ -242,7 +244,7 @@ def display_bias_variance_tradeoff(results: pd.DataFrame, key: str):
     plt.xlabel(f"{key} Items")
     plt.ylabel("Score")
     plt.xticks(rotation=45)
-    plt.show()
+    plt.savefig(f'../{key}_search_values_{label}.png', dpi=600, bbox_inches="tight")
     plt.show()
 
 

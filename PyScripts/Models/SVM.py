@@ -45,7 +45,7 @@ if __name__ == "__main__":
        }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, "lag_period")
+        display_bias_variance_tradeoff(for_display, "lag_period", label='SVM')
         best_lag=best_parameters['lag_period']
         print(f"Best Utility Score (lag_period): {best_score}")
         print(f"Best lag_period: {best_lag}")
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, "lookback_period")
+        display_bias_variance_tradeoff(for_display, "lookback_period", label='SVM')
         best_lookback=best_parameters['lookback_period']
         print(f"Best Utility Score (lookback_period): {best_score}")
         print(f"Best lookback_period: {best_lookback}")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         # ------- Selection of Optimal data_clean() Parameters -------
         print("------- Finding Optimal data_clean() Parameters")
         param_grid={
-            'raw': [True, False],
+            'raw': [False],
             'extra_features': [True, False],
             'lag_period': [best_lag],
             'lookback_period': [best_lookback],
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_linear.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="SVM_Linear")
 
     optimized_linear_=clone(grid_search_linear.best_estimator_)
     optimized_linear_.fit(X_train, y_train)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_rbf.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="SVM_RBF")
 
     optimized_rbf_=clone(grid_search_rbf.best_estimator_)
     optimized_rbf_.fit(X_train, y_train)
@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_poly.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="SVM_Poly")
 
     optimized_poly_=clone(grid_search_poly.best_estimator_)
     optimized_poly_.fit(X_train, y_train)

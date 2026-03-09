@@ -38,8 +38,8 @@ if __name__=="__main__":
         "lag_period": 2,
         "lookback_period": 7,
         "sector": True,
-        "corr_threshold": 0.8,
-        "corr_level": 0
+        "corr_threshold": 0.95,
+        "corr_level": 2
     }
 
     if (FIND_OPTIMAL):
@@ -55,7 +55,7 @@ if __name__=="__main__":
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lag_period")
+        display_bias_variance_tradeoff(for_display, key="lag_period", label='RF')
         best_lag=best_parameters['lag_period']
         print(f"Best Utility Score (lag_period): {best_score}")
         print(f"Best lag_period: {best_lag}")
@@ -68,7 +68,7 @@ if __name__=="__main__":
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lookback_period")
+        display_bias_variance_tradeoff(for_display, key="lookback_period", label='RF')
         best_lookback=best_parameters['lookback_period']
         print(f"Best Utility Score (lookback_period): {best_score}")
         print(f"Best lookback_period: {best_lookback}")
@@ -76,7 +76,7 @@ if __name__=="__main__":
         # ------- Selection of Optimal data_clean() Parameters -------
         print("------- Finding Optimal data_clean() Parameters")
         param_grid={
-            'raw': [True, False],
+            'raw': [False],
             'extra_features': [True, False],
             'lag_period': [best_lag],
             'lookback_period': [best_lookback],
@@ -116,7 +116,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_base.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="RF_Base")
 
     optimized_base_=clone(grid_search_base.best_estimator_)
     optimized_base_.fit(X_train, y_train)
@@ -152,7 +152,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_PCA.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="RF_PCA")
 
     optimized_PCA_=clone(grid_search_PCA.best_estimator_)
     optimized_PCA_.fit(X_train, y_train)
@@ -189,7 +189,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_LASSO.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="RF_LASSO")
 
     optimized_LASSO_=clone(grid_search_LASSO.best_estimator_)
     optimized_LASSO_.fit(X_train, y_train)
@@ -226,7 +226,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_ridge.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="RF_Ridge")
 
     optimized_ridge_=clone(grid_search_ridge.best_estimator_)
     optimized_ridge_.fit(X_train, y_train)
@@ -283,7 +283,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(RFClassifier_red_sw_wfv_pipeline), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results()
+    rwb_obj.display_wfv_results(label="RF_Stepwise")
 
     copy_RFClassifier_red_sw_wfv_pipeline=clone(RFClassifier_red_sw_wfv_pipeline)
     copy_RFClassifier_red_sw_wfv_pipeline.fit(X_train_final, y_train)
