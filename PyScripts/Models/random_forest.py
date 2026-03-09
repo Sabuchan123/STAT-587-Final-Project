@@ -11,7 +11,7 @@ from sklearn.pipeline import Pipeline
 
 from H_reduce import step_wise_reg_wfv
 from H_prep import clean_data, data_clean_param_selection, import_data
-from H_eval import RollingWindowBacktest, get_final_metrics, utility_score
+from H_eval import RollingWindowBacktest, get_final_metrics, utility_score, display_bias_variance_tradeoff
 from H_helpers import log_result, get_cwd, append_params_to_dict
 
 VERBOSE=0
@@ -29,8 +29,9 @@ if __name__=="__main__":
     # testing: bool =False, extra_features: bool =True, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0
     DATA=import_data(extra_features=True, testing=False, cluster=False, n_clusters=100, corr_threshold=0.95, corr_level=0)
 
-    FIND_OPTIMAL=True
-    
+    FIND_OPTIMAL=False
+    W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
+
     parameters_={ # These are optimal as of 3/8/2026 4:00 PM w=4
         "raw": False,
         "extra_features": True,
@@ -38,7 +39,7 @@ if __name__=="__main__":
         "lookback_period": 7,
         "sector": True,
         "corr_threshold": 0.8,
-        "corr_level": 0,
+        "corr_level": 0
     }
 
     if (FIND_OPTIMAL):
@@ -48,12 +49,13 @@ if __name__=="__main__":
         
         print("------- Finding Optimal lag_period Value")
         param_grid={
-            'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3]],
+            'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3], [1, 2, 3, 4], [2, 3, 4, 5], [2, 3, 4]],
             'sector': [True],
             'corr_level': [2]
         }
 
-        _, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, **param_grid)
+        for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
+        display_bias_variance_tradeoff(for_display, key="lag_period")
         best_lag=best_parameters['lag_period']
         print(f"Best Utility Score (lag_period): {best_score}")
         print(f"Best lag_period: {best_lag}")
@@ -65,7 +67,8 @@ if __name__=="__main__":
             'corr_level': [2]
         }
         
-        _, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, **param_grid)
+        for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
+        display_bias_variance_tradeoff(for_display, key="lookback_period")
         best_lookback=best_parameters['lookback_period']
         print(f"Best Utility Score (lookback_period): {best_score}")
         print(f"Best lookback_period: {best_lookback}")
@@ -82,9 +85,10 @@ if __name__=="__main__":
             'corr_threshold': [0.8, 0.9, 0.95]
         }
 
-        _, parameters_, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, **param_grid)
+        _, parameters_, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, w=W, **param_grid)
         print(f"Best Utility Score {best_score}")
         print(f"Optimal parameter {parameters_}")
+        
 
     download_params = {f"clean_data__{k}=": v for k, v in parameters_.items()}
 
@@ -122,6 +126,7 @@ if __name__=="__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, optimized_base_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
@@ -157,6 +162,7 @@ if __name__=="__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, optimized_PCA_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
@@ -193,6 +199,7 @@ if __name__=="__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, optimized_LASSO_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
@@ -229,6 +236,7 @@ if __name__=="__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, optimized_ridge_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
@@ -285,6 +293,7 @@ if __name__=="__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, RFClassifier_red_sw_wfv_pipeline)
         results.update(rwb_obj.results[2])
         results.update(download_params)

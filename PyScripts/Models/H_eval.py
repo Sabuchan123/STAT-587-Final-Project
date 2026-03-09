@@ -230,6 +230,22 @@ def utility_score(results: dict, rwb: dict, w: float =4.0):
     score=(results['test_split_accuracy'] + results['test_up_recall'] + results['test_down_recall'] + results['test_matthew_corr_coef'] - 1.5) - (1 / w) * (train_cv_CoV + train_rwb_CoV + val_cv_CoV + test_rwb_CoV)
     return score
 
+def display_bias_variance_tradeoff(results: pd.DataFrame, key: str):
+    results_plot=results[[key, 'score']].copy()
+    sort_key=results_plot[key].map(lambda x: max(x) if isinstance(x, list) else x)
+    results_plot=results_plot.iloc[sort_key.argsort()]
+    results_plot[key]=results_plot[key].map(str)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(results_plot[key], results_plot['score'], marker='o', label="Score")
+    plt.plot(results_plot[key], [0.0 for _ in range (len(results_plot['score']))], linestyle="--", alpha=0.4, label="Baseline")
+    plt.xlabel(f"{key} Items")
+    plt.ylabel("Score")
+    plt.xticks(rotation=45)
+    plt.show()
+    plt.show()
+
+
 class ModelResults:
     """Class to store and compare classification model results"""
     def __init__(self):

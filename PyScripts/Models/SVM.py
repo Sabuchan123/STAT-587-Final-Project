@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from H_prep import clean_data, import_data, data_clean_param_selection
-from H_eval import RollingWindowBacktest, get_final_metrics, utility_score
+from H_eval import RollingWindowBacktest, get_final_metrics, utility_score, display_bias_variance_tradeoff
 from H_helpers import log_result, get_cwd, append_params_to_dict
 
 cwd=get_cwd("STAT-587-Final-Project")
@@ -18,16 +18,18 @@ if __name__ == "__main__":
     TEST_SIZE=0.2
     # testing: bool =False, extra_features: bool =True, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0
     DATA=import_data(extra_features=True, testing=False, cluster=False, n_clusters=100, corr_threshold=0.95, corr_level=0)
-    FIND_OPTIMAL=True
     
-    parameters_={
+    FIND_OPTIMAL=False
+    W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
+
+    parameters_={ # These are optimal as of 3/8/2026 4:00 PM w=4
         "raw": False,
         "extra_features": False,
         "lag_period": 2,
         "lookback_period": 7,
         "sector": True,
         "corr_threshold": 0.8,
-        "corr_level": 2,
+        "corr_level": 2
     }
 
     if (FIND_OPTIMAL):
@@ -37,12 +39,13 @@ if __name__ == "__main__":
         
         print("------- Finding Optimal lag_period Value")
         param_grid={
-            'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3]],
+            'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3], [1, 2, 3, 4], [2, 3, 4, 5], [2, 3, 4]],
             'sector': [True],
             'corr_level': [2]
-        }
+       }
 
-        _, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, **param_grid)
+        for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
+        display_bias_variance_tradeoff(for_display, "lag_period")
         best_lag=best_parameters['lag_period']
         print(f"Best Utility Score (lag_period): {best_score}")
         print(f"Best lag_period: {best_lag}")
@@ -54,7 +57,8 @@ if __name__ == "__main__":
             'corr_level': [2]
         }
         
-        _, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, **param_grid)
+        for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
+        display_bias_variance_tradeoff(for_display, "lookback_period")
         best_lookback=best_parameters['lookback_period']
         print(f"Best Utility Score (lookback_period): {best_score}")
         print(f"Best lookback_period: {best_lookback}")
@@ -71,7 +75,7 @@ if __name__ == "__main__":
             'corr_threshold': [0.8, 0.9, 0.95]
         }
 
-        _, parameters_, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, **param_grid)
+        _, parameters_, best_score=data_clean_param_selection(*DATA, clone(base_SVM_rbf_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, w=W, **param_grid)
         print(f"Best Utility Score {best_score}")
         print(f"Optimal parameter {parameters_}")
 
@@ -111,6 +115,7 @@ if __name__ == "__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, grid_search_linear.best_estimator_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
@@ -145,6 +150,7 @@ if __name__ == "__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, grid_search_rbf.best_estimator_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
@@ -180,6 +186,7 @@ if __name__ == "__main__":
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
         results.update({'utility_score': round(util_score, 3)})
+        results.update({'w': W})
         results=append_params_to_dict(results, grid_search_poly.best_estimator_)
         results.update(rwb_obj.results[2])
         results.update(download_params)

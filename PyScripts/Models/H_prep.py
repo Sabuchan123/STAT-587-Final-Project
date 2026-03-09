@@ -374,7 +374,8 @@ def data_clean_param_selection(DATA: pd.DataFrame, y_regression: pd.DataFrame, m
         'lookback_period': int,
         'sector': bool,
         'corr_threshold': float,
-        'corr_level': int
+        'corr_level': int,
+        'w': int
     }
     
     cleaned_kwargs={}
