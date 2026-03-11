@@ -36,9 +36,9 @@ def import_data(testing: bool =False, extra_features: bool =True, cluster: bool 
     table=None
     print("------- Downloading Data")
     if (testing):
-        table=pq.read_table(cwd / "PyScripts" / "Data" / "raw_data_2_years.parquet")
+        table=pq.read_table(cwd / "Project" / "Data" / "raw_data_2_years.parquet")
     else:
-        table=pq.read_table(cwd / "PyScripts" / "Data" / "raw_data_8_years.parquet")
+        table=pq.read_table(cwd / "Project" / "Data" / "raw_data_8_years.parquet")
     DATA=table.to_pandas()
     print("Finished Downloading Data -------")
     print("Initial shape:", DATA.shape[0], "rows,", DATA.shape[1], "columns.")
@@ -84,7 +84,7 @@ def import_data(testing: bool =False, extra_features: bool =True, cluster: bool 
             representative_stocks.append(X_stocks.index[indices[np.argmin(distances)]])
 
         DATA=DATA.loc[:, idx[:, 'Stocks', representative_stocks]]
-        print("---EXTRA---: Applied clustering and selected representative stocks.")
+        print("---REDUCE---: Applied clustering and selected representative stocks.")
         print("Current shape:", DATA.shape[0], "rows,", DATA.shape[1], "columns.")
 
     
@@ -98,21 +98,16 @@ def import_data(testing: bool =False, extra_features: bool =True, cluster: bool 
         to_drop=[column for column in upper.columns if any(upper[column]>corr_threshold)]
 
         DATA=DATA.drop(columns=to_drop, level='Ticker')
-        print(f"---EXTRA---: (corr_level={corr_level}) Dropped {len(to_drop)} highly correlated stocks by closing percent change.")
+        print(f"---REDUCE---: (corr_level={corr_level}) Dropped {len(to_drop)} highly correlated stocks by closing percent change.")
         print("Current shape:", DATA.shape[0], "rows,", DATA.shape[1], "columns.")
 
     if (extra_features):
         DATA[("Day of Week", "Calendar", "All")]=DATA.index.dayofweek
         print("---EXTRA---: Created Day of Week.")
-    
-        High_=DATA.loc[:, idx['High', :, :]]
-        Low_=DATA.loc[:, idx['Low', :, :]]
-        DATA=pd.concat([DATA, pd.DataFrame(High_.values - Low_.values, index=High_.index, columns=High_.columns).rename(columns={'High' : 'Daily Range'}, level=0)], axis=1)
-        print("---EXTRA---: Created Daily Range.")
 
     return DATA, y_regression
 
-def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: int =7, lag_period: list =[1], extra_features: bool =True, raw: bool =False, sector: bool =False, corr_threshold: float =0.95, corr_level: int =0) -> tuple[pd.DataFrame, pd.Series]:    
+def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: int =7, lag_period: list =[1], raw: bool =False, sector: bool =False, corr_threshold: float =0.95, corr_level: int =0) -> tuple[pd.DataFrame, pd.Series]:    
     if (lookback_period < 5 and lookback_period!=0): 
         raise ValueError("lookback_period must be greater than or equal to 6.")
     if isinstance(lag_period, int):
@@ -142,7 +137,7 @@ def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: 
                 np.divide((price.values - ema.values), vol.values, out=z_score, where=(vol.values > 0))
                 new_columns.append(norm_vol.rename(columns={metric: f"{metric} VOL {lookback_period}"}, level=0))
                 new_columns.append(pd.DataFrame(z_score, index=DATA.index, columns=price.columns).rename(columns={metric: f"{metric} Z-Score {lookback_period}"}, level=0))
-            print("Created EMA, Rolling Volatility (Scaled) and Rolling Z-Score.")
+            print("Created Rolling Volatility (Scaled) and Rolling Z-Score.")
 
             rolling_High_=DATA.loc[:, idx['High', :, :]].rolling(window=lookback_period).max().rename(columns={'High': f"MAX {lookback_period}"}, level=0)
             rolling_Low_=DATA.loc[:, idx['Low', :, :]].rolling(window=lookback_period).min().rename(columns={'Low': f"MIN {lookback_period}"}, level=0)
@@ -163,11 +158,10 @@ def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: 
             new_columns.append((price_volume_rol_sum / volume_rol_sum).rename(columns={'Volume': f'Rolling VWAP {lookback_period}'}, level=0))
             print("Created Rolling Volume Weighted Average Price.")
 
-        if (extra_features):
-            for metric in DATA.columns.get_level_values(0).unique():
-                if metric[:4] == "Open":
-                    new_columns.append(DATA.loc[:, idx[metric, :, :]].shift(-1).rename(columns={metric: f"{metric} Forward Lag"}, level=0))
-            print("---EXTRA---: Created Open Metrics Forward Lag.")
+        for metric in DATA.columns.get_level_values(0).unique():
+            if metric[:4] == "Open":
+                new_columns.append(DATA.loc[:, idx[metric, :, :]].shift(-1).rename(columns={metric: f"{metric} Forward Lag"}, level=0))
+        print("Created Open Metrics Forward Lag.")
 
         DATA.drop(columns=["Close", "Open", "High", "Low"], level=0, inplace=True)
         DATA=DATA.sort_index(axis=1)
@@ -190,14 +184,14 @@ def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: 
 
     if (sector):
         if ((corr_level not in [0, 2])): print("!!!WARNING!!!: Since dimensionality was reduced before grouping by sector, the sector feature averages may no longer reflect the sector itself.")
-        lookup_df = pd.read_csv(cwd / "PyScripts" / "Data" / "stock_lookup_table.csv")
+        lookup_df = pd.read_csv(cwd / "Project" / "Data" / "stock_lookup_table.csv")
         sector_map = lookup_df.set_index('Ticker')['Sector'].to_dict()
 
         metrics = X.columns.get_level_values(0)
         sectors = X.columns.get_level_values(2).map(sector_map)
         
         X = X.T.groupby([metrics, sectors]).mean().T
-        print("---EXTRA---: Grouped Features by Sector Averages.")
+        print("---REDUCE---: Grouped Features by Sector Averages.")
         print("Current shape:", X.shape[0], "rows,", X.shape[1], "columns.")
 
     if (corr_level in [2, 3]):
@@ -225,7 +219,7 @@ def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: 
                 for ticker in to_drop:
                     cols_to_remove.append((feature, ticker))
         X=X.drop(columns=cols_to_remove)
-        print(f"---EXTRA---: (corr_level={corr_level}) Dropped {len(cols_to_remove)} highly correlated feature columns.")
+        print(f"---REDUCE---: (corr_level={corr_level}) Dropped {len(cols_to_remove)} highly correlated feature columns.")
 
     print("Predictors, and Target (Regression) successfully split.")
 
@@ -323,7 +317,7 @@ def efficient_clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, sector:
     if (new_columns):
         if (sector):
             if (corr_level not in [2, 0]): print("!!!WARNING!!!: Since dimensionality was reduced before grouping by sector, the sector feature averages may no longer reflect the sector itself.")
-            lookup_df = pd.read_csv(cwd / "PyScripts" / "Data" / "stock_lookup_table.csv")
+            lookup_df = pd.read_csv(cwd / "Project" / "Data" / "stock_lookup_table.csv")
             sector_map = lookup_df.set_index('Ticker')['Sector'].to_dict()
 
             metrics = X.columns.get_level_values(0)

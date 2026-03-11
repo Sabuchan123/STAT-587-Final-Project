@@ -7,6 +7,23 @@ DATA[0].dropna(how='any', axis=0, inplace=True)
 
 idx=pd.IndexSlice
 
+fig, ax = plt.subplots(figsize=(16, 7), dpi=100)
+target_data = DATA[0].loc[:, idx["Close", "Index", "^SPX"]]
+
+ax.plot(target_data.index, target_data.values, 
+        color='#2c3e50', linewidth=1.5, alpha=0.9, label='S&P 500 Index')
+ax.axvspan(pd.Timestamp('2020-02-15'), pd.Timestamp('2020-04-15'), 
+           color='#e74c3c', alpha=0.15, label='2020 COVID-19 Recession')
+ax.axvspan(pd.Timestamp('2025-02-01'), pd.Timestamp('2025-05-01'), 
+           color='#f39c12', alpha=0.15, label='2025 Tariff Shock')
+
+ax.set_xlabel("Timeline", fontsize=12, labelpad=12)
+ax.set_ylabel("Closing Value", fontsize=12, labelpad=12)
+ax.grid(visible=True, linestyle=':', alpha=0.5, color='gray')
+ax.legend(loc='upper left', frameon=False, fontsize=20)
+
+plt.savefig('Project/Models/results/image_results/SP500IndexValues/sp500_styled_analysis.png', dpi=600, bbox_inches="tight")
+plt.show()
 
 # plt.figure(figsize=(16, 5), dpi=100)
 # plt.grid(visible=True, linestyle='--', alpha=0.5, color='gray')
@@ -39,21 +56,21 @@ idx=pd.IndexSlice
 # plt.savefig('../s&p500_index_values_data_display.png', dpi=600, bbox_inches="tight")
 # plt.show()
 
-plt.figure(figsize=(8, 5))
-plt.grid(visible=True, linestyle='--', alpha=0.5, color='gray')
-plt.plot(DATA[0].tail(100).index, DATA[0].tail(100).loc[:, idx["Close", "Index", "^SPX"]], linestyle='-', alpha=0.5)
-temp_mean=DATA[0].tail(100).loc[:, idx["Close", "Index", "^SPX"]].mean()
-plt.plot(DATA[0].tail(100).index, [temp_mean for _ in range(100)], linestyle='-', alpha=0.5)
-plt.xlabel("Date")
-plt.ylabel("Closing Value")
-plt.savefig('../s&p500_index_values_past_100_days.png', dpi=600, bbox_inches="tight")
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.grid(visible=True, linestyle='--', alpha=0.5, color='gray')
+# plt.plot(DATA[0].tail(100).index, DATA[0].tail(100).loc[:, idx["Close", "Index", "^SPX"]], linestyle='-', alpha=0.5)
+# temp_mean=DATA[0].tail(100).loc[:, idx["Close", "Index", "^SPX"]].mean()
+# plt.plot(DATA[0].tail(100).index, [temp_mean for _ in range(100)], linestyle='-', alpha=0.5)
+# plt.xlabel("Date")
+# plt.ylabel("Closing Value")
+# plt.savefig('../s&p500_index_values_past_100_days.png', dpi=600, bbox_inches="tight")
+# plt.show()
 
-plt.figure(figsize=(8, 5))
-plt.grid(visible=True, linestyle='--', alpha=0.5, color='gray')
-plt.plot(DATA[0].tail(100).index, DATA[0].tail(101).loc[:, idx["Close", "Index", "^SPX"]].pct_change().dropna(how="any", axis=0), linestyle='-', alpha=0.5)
-plt.plot(DATA[0].tail(100).index, [0 for _ in range(100)], linestyle='-', alpha=0.5)
-plt.xlabel("Date")
-plt.ylabel("Closing Return Value")
-plt.savefig('../s&p500_index_values_past_100_days_close_pc.png', dpi=600, bbox_inches="tight")
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.grid(visible=True, linestyle='--', alpha=0.5, color='gray')
+# plt.plot(DATA[0].tail(100).index, DATA[0].tail(101).loc[:, idx["Close", "Index", "^SPX"]].pct_change().dropna(how="any", axis=0), linestyle='-', alpha=0.5)
+# plt.plot(DATA[0].tail(100).index, [0 for _ in range(100)], linestyle='-', alpha=0.5)
+# plt.xlabel("Date")
+# plt.ylabel("Closing Return Value")
+# plt.savefig('../s&p500_index_values_past_100_days_close_pc.png', dpi=600, bbox_inches="tight")
+# plt.show()

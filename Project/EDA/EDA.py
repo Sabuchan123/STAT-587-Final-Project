@@ -14,14 +14,14 @@ else:
 
 import sys
 import os
-sys.path.append(os.path.abspath(cwd / "PyScripts" / "Models"))
+sys.path.append(os.path.abspath(cwd / "Project" / "Models"))
 from H_prep import import_data, clean_data
 
 
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 8)
 
-lookup_df = pd.read_csv(cwd / "PyScripts" / "Data" / "stock_lookup_table.csv")
+lookup_df = pd.read_csv(cwd / "Project" / "Data" / "stock_lookup_table.csv")
 
 X, y=import_data(extra_features=False, corr_level=0, testing=True)
 
@@ -90,15 +90,13 @@ sector_vol_series=vol_df.T.groupby(sector_vol_map).mean().T
 
 total_average_volatility=vol_df.mean(axis=1)
 plt.figure(figsize=(10, 6))
-plt.title("Total Average Sector Volatility Over Time against Sector Specific")
 plt.plot(total_average_volatility.index, total_average_volatility, color="black", linewidth=2, label="Total Market")
 sector_vol_series=vol_df.T.groupby(sector_vol_map).mean().T
 for sector in sector_vol_series.columns:
     plt.plot(sector_vol_series.index, sector_vol_series[sector], label=sector, alpha=0.35, linewidth=1)
-plt.title("Smoothed Sector Volatility Over Time")
 plt.xlabel("Date")
 plt.ylabel("Volatility")
 plt.legend()
 plt.tight_layout()
-plt.savefig(f'../all_sector_rolling_VOL_28.png', dpi=600, bbox_inches="tight")
+plt.savefig(f'Project/Models/results/image_results/SP500FeatureImages/all_sector_rolling_VOL_28.png', dpi=600, bbox_inches="tight")
 plt.show()
