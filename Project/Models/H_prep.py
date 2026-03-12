@@ -31,7 +31,7 @@ pd.set_option('display.max_columns', 8)
 
 cwd=get_cwd("STAT-587-Final-Project")
 
-def import_data(testing: bool =False, extra_features: bool =True, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0) -> pd.DataFrame:
+def import_data(testing: bool =False, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0) -> pd.DataFrame:
     idx=pd.IndexSlice
     table=None
     print("------- Downloading Data")
@@ -106,7 +106,7 @@ def import_data(testing: bool =False, extra_features: bool =True, cluster: bool 
 
     return DATA, y_regression
 
-def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: int =7, lag_period: list =[1], raw: bool =False, sector: bool =False, corr_threshold: float =0.95, corr_level: int =0) -> tuple[pd.DataFrame, pd.Series]:    
+def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: int =0, lag_period: list =[0], raw: bool =False, sector: bool =False, corr_threshold: float =0.95, corr_level: int =0) -> tuple[pd.DataFrame, pd.Series]:    
     if (lookback_period < 5 and lookback_period!=0): 
         raise ValueError("lookback_period must be greater than or equal to 6.")
     if isinstance(lag_period, int):
@@ -362,14 +362,12 @@ def efficient_clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, sector:
 
 def data_clean_param_selection(DATA: pd.DataFrame, y_regression: pd.DataFrame, model: BaseEstimator, test_size: float, window_size: int, horizon: int, w: float =4.0, eff_support: bool =False, **kwargs: List[Any]) -> tuple[pd.DataFrame, dict, float]:
     SCHEMA: Dict[str, Type] = {
-        'raw': bool,
-        'extra_features': bool,
         'lag_period': (int, list),
         'lookback_period': int,
         'sector': bool,
         'corr_threshold': float,
         'corr_level': int,
-        'w': int
+        'w': float
     }
     
     cleaned_kwargs={}

@@ -27,16 +27,14 @@ if __name__=="__main__":
     EXPORT=True
     TEST_SIZE=0.2
     # testing: bool =False, extra_features: bool =True, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0
-    DATA=import_data(extra_features=True, testing=False, cluster=False, n_clusters=100, corr_threshold=0.95, corr_level=0)
+    DATA=import_data()
 
     FIND_OPTIMAL=False
     W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
 
-    parameters_={ # These are optimal as of 3/8/2026 4:00 PM w=4
-        "raw": False,
-        "extra_features": True,
-        "lag_period": 2,
-        "lookback_period": 7,
+    parameters_={ # These are optimal as of 3/11/2026 10:00 PM w=4
+        "lag_period": [1, 2, 3, 4],
+        "lookback_period": 14,
         "sector": True,
         "corr_threshold": 0.95,
         "corr_level": 2
@@ -51,7 +49,7 @@ if __name__=="__main__":
         param_grid={
             'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3], [1, 2, 3, 4], [2, 3, 4, 5], [2, 3, 4]],
             'sector': [True],
-            'corr_level': [0]
+            'corr_level': [2]
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
@@ -64,7 +62,7 @@ if __name__=="__main__":
         param_grid={
             'lookback_period': [0, 7, 10, 14, 17, 21, 28],
             'sector': [True],
-            'corr_level': [0]
+            'corr_level': [2]
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
@@ -76,12 +74,10 @@ if __name__=="__main__":
         # ------- Selection of Optimal data_clean() Parameters -------
         print("------- Finding Optimal data_clean() Parameters")
         param_grid={
-            'raw': [False],
-            'extra_features': [True, False],
             'lag_period': [best_lag],
             'lookback_period': [best_lookback],
             'sector': [True],
-            'corr_level': [0, 1, 2, 3],
+            'corr_level': [2],
             'corr_threshold': [0.8, 0.9, 0.95]
         }
 
@@ -101,74 +97,74 @@ if __name__=="__main__":
     tscv=TimeSeriesSplit(n_splits=5) # CHANGEABLE (OPTIONAL)
     
     # ------- BASE APPLICATION -------
-    print("\n\n------- Base RF Model -------")
-    RFClassifier_base=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
+    # print("\n\n------- Base RF Model -------")
+    # RFClassifier_base=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
 
-    RF_pipeline_base=Pipeline([('scaler', StandardScaler()), 
-                               ('classifier', RFClassifier_base)])
+    # RF_pipeline_base=Pipeline([('scaler', StandardScaler()), 
+    #                            ('classifier', RFClassifier_base)])
 
-    param_grid={
-        'classifier__max_depth': [2, 3, 5, 10],
-        'classifier__n_estimators': [250, 500]
-    }
-    grid_search_base=GridSearchCV(RF_pipeline_base, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    grid_search_base.fit(X_train, y_train)
+    # param_grid={
+    #     'classifier__max_depth': [2, 3, 5, 10],
+    #     'classifier__n_estimators': [250, 500]
+    # }
+    # grid_search_base=GridSearchCV(RF_pipeline_base, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    # grid_search_base.fit(X_train, y_train)
 
-    rwb_obj=RollingWindowBacktest(clone(grid_search_base.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="RF_Base")
+    # rwb_obj=RollingWindowBacktest(clone(grid_search_base.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
+    # rwb_obj.rolling_window_backtest(verbose=1)
+    # rwb_obj.display_wfv_results(label="RF_Base")
 
-    optimized_base_=clone(grid_search_base.best_estimator_)
-    optimized_base_.fit(X_train, y_train)
+    # optimized_base_=clone(grid_search_base.best_estimator_)
+    # optimized_base_.fit(X_train, y_train)
 
-    results=get_final_metrics(optimized_base_, X_train, y_train, X_test, y_test, label="Base RF")
-    util_score=utility_score(results, rwb_obj)
-    print(f"Utility Score {util_score:.4}")
-    if (EXPORT):
-        results.update({'utility_score': round(util_score, 3)})
-        results.update({'w': W})
-        results=append_params_to_dict(results, optimized_base_)
-        results.update(rwb_obj.results[2])
-        results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+    # results=get_final_metrics(optimized_base_, X_train, y_train, X_test, y_test, label="Base RF")
+    # util_score=utility_score(results, rwb_obj)
+    # print(f"Utility Score {util_score:.4}")
+    # if (EXPORT):
+    #     results.update({'utility_score': round(util_score, 3)})
+    #     results.update({'w': W})
+    #     results=append_params_to_dict(results, optimized_base_)
+    #     results.update(rwb_obj.results[2])
+    #     results.update(download_params)
+    #     log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
     
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     # ------- PCA APPLICATION -------
-    print("\n\n------- PCA RF Model -------")
-    RFClassifier_PCA=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
+    # print("\n\n------- PCA RF Model -------")
+    # RFClassifier_PCA=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
 
-    RF_pipeline_PCA=Pipeline([('scaler', StandardScaler()),
-                              ('reducer', PCA()),
-                              ('classifier', RFClassifier_PCA)])
+    # RF_pipeline_PCA=Pipeline([('scaler', StandardScaler()),
+    #                           ('reducer', PCA()),
+    #                           ('classifier', RFClassifier_PCA)])
     
-    param_grid={
-        'reducer__n_components': [0.8, 0.95],
-        'classifier__max_depth': [2, 3, 5, 10],
-        'classifier__n_estimators': [250, 500]
-    }
-    grid_search_PCA=GridSearchCV(RF_pipeline_PCA, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    grid_search_PCA.fit(X_train, y_train)
+    # param_grid={
+    #     'reducer__n_components': [0.8, 0.95],
+    #     'classifier__max_depth': [2, 3, 5, 10],
+    #     'classifier__n_estimators': [250, 500]
+    # }
+    # grid_search_PCA=GridSearchCV(RF_pipeline_PCA, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    # grid_search_PCA.fit(X_train, y_train)
 
-    rwb_obj=RollingWindowBacktest(clone(grid_search_PCA.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="RF_PCA")
+    # rwb_obj=RollingWindowBacktest(clone(grid_search_PCA.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
+    # rwb_obj.rolling_window_backtest(verbose=1)
+    # rwb_obj.display_wfv_results(label="RF_PCA")
 
-    optimized_PCA_=clone(grid_search_PCA.best_estimator_)
-    optimized_PCA_.fit(X_train, y_train)
+    # optimized_PCA_=clone(grid_search_PCA.best_estimator_)
+    # optimized_PCA_.fit(X_train, y_train)
 
-    results=get_final_metrics(optimized_PCA_, X_train, y_train, X_test, y_test, label="PCA RF")
-    util_score=utility_score(results, rwb_obj)
-    print(f"Utility Score {util_score:.4}")
-    if (EXPORT):
-        results.update({'utility_score': round(util_score, 3)})
-        results.update({'w': W})
-        results=append_params_to_dict(results, optimized_PCA_)
-        results.update(rwb_obj.results[2])
-        results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+    # results=get_final_metrics(optimized_PCA_, X_train, y_train, X_test, y_test, label="PCA RF")
+    # util_score=utility_score(results, rwb_obj)
+    # print(f"Utility Score {util_score:.4}")
+    # if (EXPORT):
+    #     results.update({'utility_score': round(util_score, 3)})
+    #     results.update({'w': W})
+    #     results=append_params_to_dict(results, optimized_PCA_)
+    #     results.update(rwb_obj.results[2])
+    #     results.update(download_params)
+    #     log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     # ------- LASSO APPLICATION -------
     print("\n\n------- LASSO RF Model -------")
@@ -187,14 +183,13 @@ if __name__=="__main__":
     grid_search_LASSO=GridSearchCV(RF_pipeline_lasso, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
     grid_search_LASSO.fit(X_train, y_train)
 
-    rwb_obj=RollingWindowBacktest(clone(grid_search_LASSO.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="RF_LASSO")
-
     optimized_LASSO_=clone(grid_search_LASSO.best_estimator_)
     optimized_LASSO_.fit(X_train, y_train)
 
     results=get_final_metrics(optimized_LASSO_, X_train, y_train, X_test, y_test, label="LASSO RF")
+    rwb_obj=RollingWindowBacktest(clone(grid_search_LASSO.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON, upper_cutoff=results["test_split_thresholds"][0], lower_cutoff=results["test_split_thresholds"][1])
+    rwb_obj.rolling_window_backtest(verbose=1)
+    rwb_obj.display_wfv_results(label="RF_LASSO")
     util_score=utility_score(results, rwb_obj)
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
@@ -203,100 +198,100 @@ if __name__=="__main__":
         results=append_params_to_dict(results, optimized_LASSO_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+        log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
         
     input("Press Enter to continue...")
 
     # ------- RIDGE APPLICATION -------
-    print("\n\n------- RIDGE RF Model -------")
-    ridge_selector=SelectFromModel(LogisticRegression(l1_ratio=0, solver="saga", random_state=1, class_weight='balanced', max_iter=500, tol=5e-2), threshold='mean')
-    RFClassifier_red_ridge=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
+    # print("\n\n------- RIDGE RF Model -------")
+    # ridge_selector=SelectFromModel(LogisticRegression(l1_ratio=0, solver="saga", random_state=1, class_weight='balanced', max_iter=500, tol=5e-2), threshold='mean')
+    # RFClassifier_red_ridge=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
 
-    RF_pipeline_ridge=Pipeline([('scaler', StandardScaler()), 
-                              ('feature_selector', ridge_selector),
-                              ('classifier', RFClassifier_red_ridge)])
+    # RF_pipeline_ridge=Pipeline([('scaler', StandardScaler()), 
+    #                           ('feature_selector', ridge_selector),
+    #                           ('classifier', RFClassifier_red_ridge)])
 
-    param_grid={
-        'feature_selector__estimator__C': [0.001, 0.01, 0.1, 1],
-        'classifier__max_depth': [2, 3, 5, 10],              
-        'classifier__n_estimators': [500]
-    }
-    grid_search_ridge=GridSearchCV(RF_pipeline_ridge, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    grid_search_ridge.fit(X_train, y_train)
+    # param_grid={
+    #     'feature_selector__estimator__C': [0.001, 0.01, 0.1, 1],
+    #     'classifier__max_depth': [2, 3, 5, 10],              
+    #     'classifier__n_estimators': [500]
+    # }
+    # grid_search_ridge=GridSearchCV(RF_pipeline_ridge, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    # grid_search_ridge.fit(X_train, y_train)
 
-    rwb_obj=RollingWindowBacktest(clone(grid_search_ridge.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="RF_Ridge")
+    # rwb_obj=RollingWindowBacktest(clone(grid_search_ridge.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
+    # rwb_obj.rolling_window_backtest(verbose=1)
+    # rwb_obj.display_wfv_results(label="RF_Ridge")
 
-    optimized_ridge_=clone(grid_search_ridge.best_estimator_)
-    optimized_ridge_.fit(X_train, y_train)
+    # optimized_ridge_=clone(grid_search_ridge.best_estimator_)
+    # optimized_ridge_.fit(X_train, y_train)
 
-    results=get_final_metrics(optimized_ridge_, X_train, y_train, X_test, y_test, label="Ridge RF")
-    util_score=utility_score(results, rwb_obj)
-    print(f"Utility Score {util_score:.4}")
-    if (EXPORT):
-        results.update({'utility_score': round(util_score, 3)})
-        results.update({'w': W})
-        results=append_params_to_dict(results, optimized_ridge_)
-        results.update(rwb_obj.results[2])
-        results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+    # results=get_final_metrics(optimized_ridge_, X_train, y_train, X_test, y_test, label="Ridge RF")
+    # util_score=utility_score(results, rwb_obj)
+    # print(f"Utility Score {util_score:.4}")
+    # if (EXPORT):
+    #     results.update({'utility_score': round(util_score, 3)})
+    #     results.update({'w': W})
+    #     results=append_params_to_dict(results, optimized_ridge_)
+    #     results.update(rwb_obj.results[2])
+    #     results.update(download_params)
+    #     log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
         
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     # ------- STEP-WISE REGRESSION APPLICATION -------
-    print("\n\n------- LASSO(internal) -> STEP-WISE REGRESSION RF Model -------")
-    lasso_selector=SelectFromModel(LogisticRegression(l1_ratio=1, solver='saga', random_state=1, class_weight='balanced', max_iter=500, tol=5e-2), max_features=100, threshold='mean')
-    RFClassifier_red_lasso=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
+    # print("\n\n------- LASSO(internal) -> STEP-WISE REGRESSION RF Model -------")
+    # lasso_selector=SelectFromModel(LogisticRegression(l1_ratio=1, solver='saga', random_state=1, class_weight='balanced', max_iter=500, tol=5e-2), max_features=100, threshold='mean')
+    # RFClassifier_red_lasso=RandomForestClassifier(random_state=1, n_jobs=-1, class_weight='balanced')
 
-    RF_pipeline_lasso=Pipeline([('scaler', StandardScaler()), 
-                              ('feature_selector', lasso_selector),
-                              ('classifier', RFClassifier_red_lasso)])
+    # RF_pipeline_lasso=Pipeline([('scaler', StandardScaler()), 
+    #                           ('feature_selector', lasso_selector),
+    #                           ('classifier', RFClassifier_red_lasso)])
 
-    param_grid={
-        'feature_selector__estimator__C': [0.001, 0.01, 0.1, 1], 
-        'classifier__max_depth': [2, 3, 5, 10],              
-        'classifier__n_estimators': [500]
-    }
-    grid_search_LASSO=GridSearchCV(RF_pipeline_lasso, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
-    grid_search_LASSO.fit(X_train, y_train) 
+    # param_grid={
+    #     'feature_selector__estimator__C': [0.001, 0.01, 0.1, 1], 
+    #     'classifier__max_depth': [2, 3, 5, 10],              
+    #     'classifier__n_estimators': [500]
+    # }
+    # grid_search_LASSO=GridSearchCV(RF_pipeline_lasso, param_grid, cv=tscv, n_jobs=-1, return_train_score=True, verbose=VERBOSE)
+    # grid_search_LASSO.fit(X_train, y_train) 
 
-    best_params_from_grid = grid_search_LASSO.best_params_
+    # best_params_from_grid = grid_search_LASSO.best_params_
 
-    RF_params = {k.replace('classifier__', ''): v 
-             for k, v in best_params_from_grid.items() 
-             if k.startswith('classifier__')}
+    # RF_params = {k.replace('classifier__', ''): v 
+    #          for k, v in best_params_from_grid.items() 
+    #          if k.startswith('classifier__')}
 
-    lasso_support = grid_search_LASSO.best_estimator_.named_steps['feature_selector'].get_support()
+    # lasso_support = grid_search_LASSO.best_estimator_.named_steps['feature_selector'].get_support()
 
-    lasso_coefficient_names = X_train.columns[lasso_support].tolist()
+    # lasso_coefficient_names = X_train.columns[lasso_support].tolist()
 
-    X_train_red=X_train[lasso_coefficient_names]
-    X_test_red=X_test[lasso_coefficient_names]
+    # X_train_red=X_train[lasso_coefficient_names]
+    # X_test_red=X_test[lasso_coefficient_names]
 
-    RFClassifier_red_sw_wfv_pipeline=Pipeline([('scaler', StandardScaler()),
-                                               ('classifier', RandomForestClassifier(**RF_params, random_state=1, n_jobs=1, class_weight='balanced'))])
+    # RFClassifier_red_sw_wfv_pipeline=Pipeline([('scaler', StandardScaler()),
+    #                                            ('classifier', RandomForestClassifier(**RF_params, random_state=1, n_jobs=1, class_weight='balanced'))])
 
-    X_train_final, X_test_final=step_wise_reg_wfv(RFClassifier_red_sw_wfv_pipeline, X_train_red, y_train, X_test_red) 
+    # X_train_final, X_test_final=step_wise_reg_wfv(RFClassifier_red_sw_wfv_pipeline, X_train_red, y_train, X_test_red) 
 
-    RFClassifier_red_sw_wfv_pipeline.fit(X_train_final, y_train)
+    # RFClassifier_red_sw_wfv_pipeline.fit(X_train_final, y_train)
 
-    rwb_obj=RollingWindowBacktest(clone(RFClassifier_red_sw_wfv_pipeline), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="RF_Stepwise")
+    # rwb_obj=RollingWindowBacktest(clone(RFClassifier_red_sw_wfv_pipeline), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
+    # rwb_obj.rolling_window_backtest(verbose=1)
+    # rwb_obj.display_wfv_results(label="RF_Stepwise")
 
-    copy_RFClassifier_red_sw_wfv_pipeline=clone(RFClassifier_red_sw_wfv_pipeline)
-    copy_RFClassifier_red_sw_wfv_pipeline.fit(X_train_final, y_train)
+    # copy_RFClassifier_red_sw_wfv_pipeline=clone(RFClassifier_red_sw_wfv_pipeline)
+    # copy_RFClassifier_red_sw_wfv_pipeline.fit(X_train_final, y_train)
 
-    results=get_final_metrics(copy_RFClassifier_red_sw_wfv_pipeline, X_train_final, y_train, X_test_final, y_test, label="Stepwise RF")
-    util_score=utility_score(results, rwb_obj)
-    print(f"Utility Score {util_score:.4}")
-    if (EXPORT):
-        results.update({'utility_score': round(util_score, 3)})
-        results.update({'w': W})
-        results=append_params_to_dict(results, RFClassifier_red_sw_wfv_pipeline)
-        results.update(rwb_obj.results[2])
-        results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+    # results=get_final_metrics(copy_RFClassifier_red_sw_wfv_pipeline, X_train_final, y_train, X_test_final, y_test, label="Stepwise RF")
+    # util_score=utility_score(results, rwb_obj)
+    # print(f"Utility Score {util_score:.4}")
+    # if (EXPORT):
+    #     results.update({'utility_score': round(util_score, 3)})
+    #     results.update({'w': W})
+    #     results=append_params_to_dict(results, RFClassifier_red_sw_wfv_pipeline)
+    #     results.update(rwb_obj.results[2])
+    #     results.update(download_params)
+    #     log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
         
-    input("Press Enter to Finish...")
+    # input("Press Enter to Finish...")

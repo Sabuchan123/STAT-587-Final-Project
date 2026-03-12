@@ -24,15 +24,13 @@ if __name__=="__main__":
     tscv=TimeSeriesSplit(n_splits=5)
     custom_Cs=[0.05, 0.1, 1.0, 10.0]
     # testing: bool =False, extra_features: bool =True, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0
-    DATA=import_data(extra_features=True, testing=False, cluster=False, n_clusters=100, corr_threshold=0.95, corr_level=0)
+    DATA=import_data()
 
     FIND_OPTIMAL=False
     W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
 
-    parameters_={  # These are optimal as of 3/9/2026 4:00 AM w=4
-        "raw": False,
-        "extra_features": False,
-        "lag_period": [1, 2, 3],
+    parameters_={  # These are optimal as of 3/11/2026 10:00 AM w=4
+        "lag_period": [1, 2],
         "lookback_period": 21,
         "sector": True,
         "corr_threshold": 0.9,
@@ -48,7 +46,7 @@ if __name__=="__main__":
         param_grid={
             'lag_period': [1, 2, 3, 4, 5, [1, 2], [1, 2, 3], [2, 3], [1, 3], [1, 2, 3, 4], [2, 3, 4, 5], [2, 3, 4]],
             'sector': [True],
-            'corr_level': [0]
+            'corr_level': [2]
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
@@ -61,7 +59,7 @@ if __name__=="__main__":
         param_grid={
             'lookback_period': [0, 7, 10, 14, 17, 21, 28],
             'sector': [True],
-            'corr_level': [0]
+            'corr_level': [2]
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
@@ -71,14 +69,12 @@ if __name__=="__main__":
         print(f"Best lookback_period: {best_lookback}")
 
         # ------- Selection of Optimal data_clean() Parameters -------
-        print("------- Finding Optimal data_clean() Parameters")
+        print("------- Finding Optimal corr_threshold Value")
         param_grid={
-            'raw': [False],
-            'extra_features': [True, False],
             'lag_period': [best_lag],
             'lookback_period': [best_lookback],
             'sector': [True],
-            'corr_level': [0, 1, 2, 3],
+            'corr_level': [2],
             'corr_threshold': [0.8, 0.9, 0.95]
         }
 
@@ -108,14 +104,13 @@ if __name__=="__main__":
 
     Opt_Log_Reg_model_pipeline_R=Pipeline([('scaler', StandardScaler()), ('classifier', Opt_Log_Reg_R)])
 
-    rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_R), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="LR_LASSO")
-
     optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
     optimized_Log_Reg_R_.fit(X_train, y_train)
 
     results=get_final_metrics(optimized_Log_Reg_R_, X_train, y_train, X_test, y_test, n_splits=10, label="LASSO(int.) Log. Reg.")
+    rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_R), X, y_classification, X_train, WINDOW_SIZE, HORIZON, upper_cutoff=results["test_split_thresholds"][0], lower_cutoff=results["test_split_thresholds"][1])
+    rwb_obj.rolling_window_backtest(verbose=1)
+    rwb_obj.display_wfv_results(label="LR_LASSO")
     util_score=utility_score(results, rwb_obj)
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):
@@ -124,73 +119,73 @@ if __name__=="__main__":
         results=append_params_to_dict(results, optimized_Log_Reg_R_)
         results.update(rwb_obj.results[2])
         results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+        log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
 
     input("Press Enter to continue...")
 
     # ------- RIDGE(Internal) APPLICATION -------
-    Log_Reg_L=LogisticRegressionCV(Cs=custom_Cs, cv=tscv, l1_ratios=[0], solver='saga', class_weight='balanced', random_state=1, n_jobs=-1, max_iter=500, tol=1e-2, verbose=VERBOSE)
+    # Log_Reg_L=LogisticRegressionCV(Cs=custom_Cs, cv=tscv, l1_ratios=[0], solver='saga', class_weight='balanced', random_state=1, n_jobs=-1, max_iter=500, tol=1e-2, verbose=VERBOSE)
     
-    Log_Reg_model_pipeline_L=Pipeline([('scaler', StandardScaler()), ('classifier', Log_Reg_L)])
+    # Log_Reg_model_pipeline_L=Pipeline([('scaler', StandardScaler()), ('classifier', Log_Reg_L)])
 
-    Log_Reg_model_pipeline_L.fit(X_train, y_train)
+    # Log_Reg_model_pipeline_L.fit(X_train, y_train)
 
-    best_c = Log_Reg_model_pipeline_L.named_steps['classifier'].C_[0]
-    Opt_Log_Reg_L=LogisticRegression(C=best_c, l1_ratio=0, solver='saga', random_state=1, max_iter=500, tol=1e-2)
+    # best_c = Log_Reg_model_pipeline_L.named_steps['classifier'].C_[0]
+    # Opt_Log_Reg_L=LogisticRegression(C=best_c, l1_ratio=0, solver='saga', random_state=1, max_iter=500, tol=1e-2)
 
-    Opt_Log_Reg_model_pipeline_L=Pipeline([('scaler', StandardScaler()), ('classifier', Opt_Log_Reg_L)])
+    # Opt_Log_Reg_model_pipeline_L=Pipeline([('scaler', StandardScaler()), ('classifier', Opt_Log_Reg_L)])
 
-    rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_L), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="LR_Ridge")
+    # rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_L), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
+    # rwb_obj.rolling_window_backtest(verbose=1)
+    # rwb_obj.display_wfv_results(label="LR_Ridge")
 
-    optimized_Log_Reg_L_=clone(Opt_Log_Reg_model_pipeline_L)
-    optimized_Log_Reg_L_.fit(X_train, y_train)
+    # optimized_Log_Reg_L_=clone(Opt_Log_Reg_model_pipeline_L)
+    # optimized_Log_Reg_L_.fit(X_train, y_train)
 
-    results=get_final_metrics(optimized_Log_Reg_L_, X_train, y_train, X_test, y_test, n_splits=10, label="Ridge(int.) Log. Reg.")
-    util_score=utility_score(results, rwb_obj)
-    print(f"Utility Score {util_score:.4}")
-    if (EXPORT):
-        results.update({'utility_score': round(util_score, 3)})
-        results.update({'w': W})
-        results=append_params_to_dict(results, optimized_Log_Reg_L_)
-        results.update(rwb_obj.results[2])
-        results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+    # results=get_final_metrics(optimized_Log_Reg_L_, X_train, y_train, X_test, y_test, n_splits=10, label="Ridge(int.) Log. Reg.")
+    # util_score=utility_score(results, rwb_obj)
+    # print(f"Utility Score {util_score:.4}")
+    # if (EXPORT):
+    #     results.update({'utility_score': round(util_score, 3)})
+    #     results.update({'w': W})
+    #     results=append_params_to_dict(results, optimized_Log_Reg_L_)
+    #     results.update(rwb_obj.results[2])
+    #     results.update(download_params)
+    #     log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     # ------- PCA to Ridge(Internal) APPLICATION -------
-    Log_Reg_PCA_L=LogisticRegression(l1_ratio=0, solver='liblinear', class_weight='balanced', random_state=1)
+    # Log_Reg_PCA_L=LogisticRegression(l1_ratio=0, solver='liblinear', class_weight='balanced', random_state=1)
     
-    Log_Reg_model_pipeline_PCA_L=Pipeline([('scaler', StandardScaler()),
-                                           ('pca', PCA()), 
-                                           ('classifier', Log_Reg_PCA_L)])
+    # Log_Reg_model_pipeline_PCA_L=Pipeline([('scaler', StandardScaler()),
+    #                                        ('pca', PCA()), 
+    #                                        ('classifier', Log_Reg_PCA_L)])
 
-    param_grid={
-        'pca__n_components': [0.7, 0.8, 0.9, 0.95],
-        'classifier__C': [0.01, 0.1, 1.0, 10.0]
-    }
-    grid_search_PCA_ridge=GridSearchCV(Log_Reg_model_pipeline_PCA_L, param_grid, cv=tscv, return_train_score=True, verbose=VERBOSE)
+    # param_grid={
+    #     'pca__n_components': [0.7, 0.8, 0.9, 0.95],
+    #     'classifier__C': [0.01, 0.1, 1.0, 10.0]
+    # }
+    # grid_search_PCA_ridge=GridSearchCV(Log_Reg_model_pipeline_PCA_L, param_grid, cv=tscv, return_train_score=True, verbose=VERBOSE)
 
-    grid_search_PCA_ridge.fit(X_train, y_train)
+    # grid_search_PCA_ridge.fit(X_train, y_train)
 
-    rwb_obj=RollingWindowBacktest(clone(grid_search_PCA_ridge.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="LR_PCA_Ridge")
+    # rwb_obj=RollingWindowBacktest(clone(grid_search_PCA_ridge.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
+    # rwb_obj.rolling_window_backtest(verbose=1)
+    # rwb_obj.display_wfv_results(label="LR_PCA_Ridge")
 
-    optimized_Log_Reg_PCA_ridge_=clone(grid_search_PCA_ridge.best_estimator_)
-    optimized_Log_Reg_PCA_ridge_.fit(X_train, y_train)
+    # optimized_Log_Reg_PCA_ridge_=clone(grid_search_PCA_ridge.best_estimator_)
+    # optimized_Log_Reg_PCA_ridge_.fit(X_train, y_train)
 
-    results=get_final_metrics(optimized_Log_Reg_PCA_ridge_, X_train, y_train, X_test, y_test, n_splits=10, label="PCA Ridge(int.) Log. Reg.")
-    util_score=utility_score(results, rwb_obj)
-    print(f"Utility Score {util_score:.4}")
-    if (EXPORT):
-        results.update({'utility_score': round(util_score, 3)})
-        results.update({'w': W})
-        results=append_params_to_dict(results, optimized_Log_Reg_PCA_ridge_)
-        results.update(rwb_obj.results[2])
-        results.update(download_params)
-        log_result(results, cwd / 'output' / 'results', "results.csv")
+    # results=get_final_metrics(optimized_Log_Reg_PCA_ridge_, X_train, y_train, X_test, y_test, n_splits=10, label="PCA Ridge(int.) Log. Reg.")
+    # util_score=utility_score(results, rwb_obj)
+    # print(f"Utility Score {util_score:.4}")
+    # if (EXPORT):
+    #     results.update({'utility_score': round(util_score, 3)})
+    #     results.update({'w': W})
+    #     results=append_params_to_dict(results, optimized_Log_Reg_PCA_ridge_)
+    #     results.update(rwb_obj.results[2])
+    #     results.update(download_params)
+    #     log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
 
-    input("Press Enter to Finish...")
+    # input("Press Enter to Finish...")
