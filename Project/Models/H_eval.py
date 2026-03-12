@@ -225,11 +225,9 @@ class RollingWindowBacktest:
         self.X_train=X_train
 
 def utility_score(results: dict, rwb: dict, w: float =4.0):
-    train_cv_CoV=results['train_std_accuracy'] / results['train_avg_accuracy']
     val_cv_CoV=results['validation_std_accuracy'] / results['validation_avg_accuracy']
-    train_rwb_CoV=rwb.results[2]['mwfv_train_std_accuracy'] / rwb.results[2]['mwfv_train_avg_accuracy'] 
     test_rwb_CoV=rwb.results[2]['mwfv_test_std_accuracy'] / rwb.results[2]['mwfv_test_avg_accuracy']
-    score=(results['test_split_accuracy'] + results['test_up_recall'] + results['test_down_recall'] + results['test_matthew_corr_coef'] - 1.5) - (1 / w) * (train_cv_CoV + train_rwb_CoV + val_cv_CoV + test_rwb_CoV)
+    score=(results['test_split_accuracy'] + results['test_up_recall'] + results['test_down_recall'] - 1.5) - (1 / w) * (val_cv_CoV + 3 * test_rwb_CoV)
     return score
 
 def display_bias_variance_tradeoff(results: pd.DataFrame, key: str, label: str | None =None):

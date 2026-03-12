@@ -101,9 +101,8 @@ def import_data(testing: bool =False, extra_features: bool =True, cluster: bool 
         print(f"---REDUCE---: (corr_level={corr_level}) Dropped {len(to_drop)} highly correlated stocks by closing percent change.")
         print("Current shape:", DATA.shape[0], "rows,", DATA.shape[1], "columns.")
 
-    if (extra_features):
-        DATA[("Day of Week", "Calendar", "All")]=DATA.index.dayofweek
-        print("---EXTRA---: Created Day of Week.")
+    DATA[("Day of Week", "Calendar", "All")]=DATA.index.dayofweek
+    print("Created Day of Week.")
 
     return DATA, y_regression
 
