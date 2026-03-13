@@ -5,7 +5,6 @@ from sklearn.model_selection import cross_validate
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import confusion_matrix
 from sklearn.base import BaseEstimator
-from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import make_scorer
 import datetime
 
@@ -20,9 +19,9 @@ def classification_accuracy(probabilities, actuals, upper_cutoff =0.5, lower_cut
 
     actual_active=actuals[mask]
     predictions_active=(probabilities[mask] > upper_cutoff).astype(int)
-    avg_pred_direction=np.mean(predictions_active)
+    avg_pred_direction=(np.sum(predictions_active) + skipped_days * 0.5) / (len(probabilities))
     accuracy=np.mean(predictions_active==actual_active)
-    return accuracy, avg_pred_direction, skipped_days
+    return accuracy, avg_pred_direction, skipped_days / len(probabilities)
 
 def display_feat_importances_tree(model, X: pd.DataFrame, n: int =50) -> pd.DataFrame:
     model_feature_df=pd.DataFrame({
@@ -119,8 +118,12 @@ def get_final_metrics(model_obj, X_train, y_train, X_test, y_test, n_splits: int
         mean_cv_test=np.mean(cv_results['test_conv_acc'])
         std_cv_test=np.std(cv_results['test_conv_acc'])
 
+        if mean_cv_test == 0:
+            score = 0.0
+        else:
+            score = (mean_cv_test / (std_cv_test + 1e-6)) * test_part_rate
+
         score=(mean_cv_test / (std_cv_test + 1e-6)) * test_part_rate # Signal to Noise Ratio times participation rate
-        score=(std_cv_test / (mean_cv_test + 1e-6)) * test_part_rate
         if (score > best_score):
             best_score=score
             best_thresholds=(upper, lower)
@@ -148,7 +151,7 @@ def get_final_metrics(model_obj, X_train, y_train, X_test, y_test, n_splits: int
     probs_active=probs[mask]
 
     if not np.any(mask) and (upper_cutoff >= 0.5 and lower_cutoff <= 0.5):
-        while not np.any(mask) and (upper_cutoff >= 0.5 and lower_cutoff <= 0.5):
+        while not np.any(mask) and (upper_cutoff >= 0.55 and lower_cutoff <= 0.):
             upper_cutoff-=0.05
             lower_cutoff+=0.05
             mask=(probs > upper_cutoff) | (probs < lower_cutoff)
@@ -301,6 +304,9 @@ class RollingWindowBacktest:
             probs=self.model.predict_proba(X_test_roll)
             
             acc, avg, skipped_days=classification_accuracy(probs, y_test_roll, self.upper_cutoff, self.lower_cutoff)
+            if (skipped_days >= 0.99):
+                acc=0.5
+                avg=0.5
             if (i > n_train):
                 test_accuracy.append(acc)
                 test_avg_direction.append(avg)
@@ -333,6 +339,7 @@ class RollingWindowBacktest:
         
         plt.plot(start_of_each_test, self.results[0], marker='o', linestyle='-', label='Segment Accuracy')
         plt.plot(start_of_each_test, self.results[1], color='gray',marker='o', linestyle='-', alpha=0.4, label='Prediction Direction')
+        plt.plot(start_of_each_test, self.results[3], color='pink',marker='o', linestyle='-', alpha=0.4, label='Skipped Rate')
         plt.plot(start_of_each_test, [0.5 for _ in range(len(start_of_each_test))], linestyle="--", label="Base Line")
         if (extra_metrics):
             in_X_train=[x for x in start_of_each_test if x < n_train]
@@ -375,7 +382,7 @@ class RollingWindowBacktest:
 def utility_score(results: dict, rwb: dict, w: float =4.0):
     val_cv_CoV=results['cv_validation_std_accuracy'] / results['cv_validation_avg_accuracy']
     test_rwb_CoV=rwb.results[2]['mwfv_test_std_accuracy'] / rwb.results[2]['mwfv_test_avg_accuracy']
-    score=(results['test_split_accuracy'] + results['test_split_up_recall'] + results['test_split_down_recall'] - 1.5) - (1 / w) * (val_cv_CoV + 3 * test_rwb_CoV)
+    score=results['test_split_participation_rate'] * (results['test_split_accuracy'] + results['test_split_up_recall'] + results['test_split_down_recall'] - 1.5) - (1 / w) * (val_cv_CoV + 3 * test_rwb_CoV)
     return score
 
 def display_bias_variance_tradeoff(results: pd.DataFrame, key: str, label: str | None =None):
@@ -392,41 +399,3 @@ def display_bias_variance_tradeoff(results: pd.DataFrame, key: str, label: str |
     plt.xticks(rotation=45)
     plt.savefig(f'../{key}_search_values_{label}.png', dpi=600, bbox_inches="tight")
     plt.show()
-
-
-class ModelResults:
-    """Class to store and compare classification model results"""
-    def __init__(self):
-        self.results_df=pd.DataFrame(columns=['Model', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
-    
-    def add_result(self, model_name: str, accuracy: float, precision: float, recall: float, f1_score: float):
-        """Add model results to the comparison dataframe"""
-        new_result=pd.DataFrame({
-            'Model': [model_name],
-            'Accuracy': [accuracy],
-            'Precision': [precision],
-            'Recall': [recall],
-            'F1-Score': [f1_score]
-        })
-        self.results_df=pd.concat([self.results_df, new_result], ignore_index=True)
-    
-    def display_results(self):
-        """Display all model results in a formatted table"""
-        print("\n" + "="*80)
-        print("MODEL COMPARISON RESULTS")
-        print("="*80)
-        print(self.results_df.to_string(index=False))
-        print("="*80 + "\n")
-    
-    def save_results(self, filepath: str):
-        """Save results to CSV file"""
-        self.results_df.to_csv(filepath, index=False)
-        print(f"Results saved to {filepath}")
-    
-    def get_best_model(self, metric: str='F1-Score'):
-        """Get the best model based on specified metric"""
-        if metric in self.results_df.columns:
-            best_idx=self.results_df[metric].idxmax()
-            return self.results_df.loc[best_idx]
-        else:
-            print(f"Metric '{metric}' not found in results")

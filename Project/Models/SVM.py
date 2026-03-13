@@ -121,27 +121,26 @@ if __name__ == "__main__":
 
     # ------- RBF SVM -------
     print("\n\n------- RBF SVM Model -------")
-    SVM_rbf=SVC(kernel="rbf", cache_size=1000, class_weight='balanced', gamma='scale', random_state=1, tol=5e-2)
+    SVM_rbf=SVC(kernel="rbf", cache_size=1000, class_weight='balanced', gamma='scale', random_state=1, tol=5e-2, probability=True)
 
     SVM_rbf_pipeline = Pipeline([('scaler', StandardScaler()),
                                  ('classifier', SVM_rbf)])
 
     param_grid={
-        'classifier__C': [0.01, 0.1, 1, 10],
-        'classifier__gamma': ['scale', 'auto', 0.01, 0.1, 1]
+        'classifier__C': [0.05, 0.1, 1, 10],
+        'classifier__gamma': ['scale', 'auto', 0.05, 0.1, 1]
     }
     
     grid_search_rbf = GridSearchCV(SVM_rbf_pipeline, param_grid, cv=tscv, scoring='balanced_accuracy', n_jobs=-1, verbose=1, return_train_score=True)
     grid_search_rbf.fit(X_train, y_train)
 
-    rwb_obj=RollingWindowBacktest(clone(grid_search_rbf.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
-    rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="SVM_RBF")
-
     optimized_rbf_=clone(grid_search_rbf.best_estimator_)
     optimized_rbf_.fit(X_train, y_train)
 
-    results=get_final_metrics(optimized_rbf_, X_train, y_train, X_test, y_test, label="RBF Ker. SVM")
+    results=get_final_metrics(optimized_rbf_, X_train, y_train, X_test, y_test, n_splits=10, label="RBF Ker. SVM")
+    rwb_obj=RollingWindowBacktest(clone(grid_search_rbf.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON, upper_cutoff=results["test_split_thresholds"][0], lower_cutoff=results["test_split_thresholds"][1])
+    rwb_obj.rolling_window_backtest(verbose=1)
+    rwb_obj.display_wfv_results(label="SVM_RBF")
     util_score=utility_score(results, rwb_obj)
     print(f"Utility Score {util_score:.4}")
     if (EXPORT):

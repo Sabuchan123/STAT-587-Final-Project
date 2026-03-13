@@ -17,8 +17,8 @@ VERBOSE=0
 cwd=get_cwd("STAT-587-Final-Project")
 
 if __name__=="__main__":
-    WINDOW_SIZE=200
-    HORIZON=40
+    WINDOW_SIZE=210
+    HORIZON=21
     EXPORT=True
     TEST_SIZE=0.2
     tscv=TimeSeriesSplit(n_splits=5)
