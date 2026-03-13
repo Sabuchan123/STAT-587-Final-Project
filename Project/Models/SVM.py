@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_rbf.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="SVM_RBF")
+    rwb_obj.display_wfv_results(label="SVM_RBF", model="SVM")
 
     optimized_rbf_=clone(grid_search_rbf.best_estimator_)
     optimized_rbf_.fit(X_train, y_train)

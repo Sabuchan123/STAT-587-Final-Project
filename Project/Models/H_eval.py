@@ -178,7 +178,7 @@ class RollingWindowBacktest:
             "mwfv_test_std_accuracy": round(test_std_accuracy, 3)
         }]
     
-    def display_wfv_results(self, extra_metrics: bool =True, label: str | None =None) -> None:
+    def display_wfv_results(self, extra_metrics: bool =True, label: str | None =None, model: str | None =None) -> None:
         plt.figure(figsize=(12, 6))
         n_train=len(self.X_train)
         n_total=len(self.X)
@@ -216,7 +216,7 @@ class RollingWindowBacktest:
         plt.text(((n_total + n_train) * 0.5), 0.05, 'Out-of-Sample Rolling', horizontalalignment='center', color='gray')
         
         plt.savefig
-        plt.savefig(f'../{label}_rwv_display.png', dpi=600, bbox_inches="tight")
+        plt.savefig(cwd / 'Project' / 'Models' / 'results' / 'image_results' / 'rwb_display_graphs' / f'{model}' / f'{label}_rwv_display.png', dpi=600, bbox_inches="tight")
         plt.show()
         plt.close('all')
 

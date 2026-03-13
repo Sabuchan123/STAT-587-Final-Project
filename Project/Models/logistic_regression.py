@@ -119,7 +119,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_R), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="LR_LASSO")
+    rwb_obj.display_wfv_results(label="LR_LASSO", model="LR")
 
     optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
     optimized_Log_Reg_R_.fit(X_train, y_train)

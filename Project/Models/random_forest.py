@@ -115,7 +115,7 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_LASSO.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="RF_LASSO")
+    rwb_obj.display_wfv_results(label="RF_LASSO", model="RF")
 
     optimized_LASSO_=clone(grid_search_LASSO.best_estimator_)
     optimized_LASSO_.fit(X_train, y_train)
