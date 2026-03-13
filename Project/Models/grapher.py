@@ -1,29 +1,32 @@
 from H_prep import import_data
 import matplotlib.pyplot as plt
 import pandas as pd
+from H_helpers import get_cwd
 
-DATA=import_data(extra_features=False, corr_level=0)
-DATA[0].dropna(how='any', axis=0, inplace=True)
+cwd=get_cwd("STAT-587-Final-Project")
 
-idx=pd.IndexSlice
+# DATA=import_data(extra_features=False, corr_level=0)
+# DATA[0].dropna(how='any', axis=0, inplace=True)
 
-fig, ax = plt.subplots(figsize=(16, 7), dpi=100)
-target_data = DATA[0].loc[:, idx["Close", "Index", "^SPX"]]
+# idx=pd.IndexSlice
 
-ax.plot(target_data.index, target_data.values, 
-        color='#2c3e50', linewidth=1.5, alpha=0.9, label='S&P 500 Index')
-ax.axvspan(pd.Timestamp('2020-02-15'), pd.Timestamp('2020-04-15'), 
-           color='#e74c3c', alpha=0.15, label='2020 COVID-19 Recession')
-ax.axvspan(pd.Timestamp('2025-02-01'), pd.Timestamp('2025-05-01'), 
-           color='#f39c12', alpha=0.15, label='2025 Tariff Shock')
+# fig, ax=plt.subplots(figsize=(16, 7), dpi=100)
+# target_data=DATA[0].loc[:, idx["Close", "Index", "^SPX"]]
 
-ax.set_xlabel("Timeline", fontsize=12, labelpad=12)
-ax.set_ylabel("Closing Value", fontsize=12, labelpad=12)
-ax.grid(visible=True, linestyle=':', alpha=0.5, color='gray')
-ax.legend(loc='upper left', frameon=False, fontsize=20)
+# ax.plot(target_data.index, target_data.values, 
+#         color='#2c3e50', linewidth=1.5, alpha=0.9, label='S&P 500 Index')
+# ax.axvspan(pd.Timestamp('2020-02-15'), pd.Timestamp('2020-04-15'), 
+#            color='#e74c3c', alpha=0.15, label='2020 COVID-19 Recession')
+# ax.axvspan(pd.Timestamp('2025-02-01'), pd.Timestamp('2025-05-01'), 
+#            color='#f39c12', alpha=0.15, label='2025 Tariff Shock')
 
-plt.savefig('Project/Models/results/image_results/SP500IndexValues/sp500_styled_analysis.png', dpi=600, bbox_inches="tight")
-plt.show()
+# ax.set_xlabel("Timeline", fontsize=12, labelpad=12)
+# ax.set_ylabel("Closing Value", fontsize=12, labelpad=12)
+# ax.grid(visible=True, linestyle=':', alpha=0.5, color='gray')
+# ax.legend(loc='upper left', frameon=False, fontsize=20)
+
+# plt.savefig('Project/Models/results/image_results/SP500IndexValues/sp500_styled_analysis.png', dpi=600, bbox_inches="tight")
+# plt.show()
 
 # plt.figure(figsize=(16, 5), dpi=100)
 # plt.grid(visible=True, linestyle='--', alpha=0.5, color='gray')
@@ -49,8 +52,8 @@ plt.show()
 # ax2.set_ylim(0, data_tail.loc[:, idx["Volume", "Index", "^SPX"]].max() * 4) 
 # ax2.set_ylabel("Volume")
 
-# lines1, labels1 = ax1.get_legend_handles_labels()
-# lines2, labels2 = ax2.get_legend_handles_labels()
+# lines1, labels1=ax1.get_legend_handles_labels()
+# lines2, labels2=ax2.get_legend_handles_labels()
 # ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 # plt.title("S&P 500 Price & Volume (Last 10 Days)")
 # plt.savefig('../s&p500_index_values_data_display.png', dpi=600, bbox_inches="tight")
@@ -74,3 +77,22 @@ plt.show()
 # plt.ylabel("Closing Return Value")
 # plt.savefig('../s&p500_index_values_past_100_days_close_pc.png', dpi=600, bbox_inches="tight")
 # plt.show()
+
+df=pd.read_csv(cwd / 'Project' / 'Models' / 'results' / 'results.csv')
+df['test_accuracy_edge']=df['test_split_accuracy'] - 0.5
+plot_df=df[['label', 'utility_score', 'test_accuracy_edge']].copy()
+plot_df.columns = ['Model', 'Utility Score (Obj)', 'Test Accuracy Edge (Acc - 0.5)']
+plot_df.set_index('Model', inplace=True)
+
+ax=plot_df.plot(kind='bar', figsize=(10, 6), width=0.8, color=['#e74c3c', '#3498db'])
+
+plt.title('Comparison of Utility Score vs. Test Accuracy', fontsize=14)
+plt.ylabel('Value', fontsize=12)
+plt.xlabel('Model Configuration', fontsize=12)
+plt.xticks(rotation=0) # Keep model names horizontal for readability
+plt.axhline(0, color='black', linewidth=1.0, linestyle='-') # Baseline 0
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.legend(loc='best')
+
+plt.tight_layout()
+plt.savefig(cwd / 'Project' / 'Models' / 'results' / 'model_comparison_results.png', dpi=300)

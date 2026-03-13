@@ -8,7 +8,8 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import matthews_corrcoef
 import datetime
 
-from H_helpers import safe_div
+from H_helpers import safe_div, get_cwd
+cwd=get_cwd("STAT-587-Final-Project")
 
 # Good note, standard deviation of any accuracies is 0.5 achieved by having a perfectly split accuracy set of all correct and all correct instances.
 
@@ -230,7 +231,7 @@ def utility_score(results: dict, rwb: dict, w: float =4.0):
     score=(results['test_split_accuracy'] + results['test_up_recall'] + results['test_down_recall'] - 1.5) - (1 / w) * (val_cv_CoV + 3 * test_rwb_CoV)
     return score
 
-def display_bias_variance_tradeoff(results: pd.DataFrame, key: str, label: str | None =None):
+def display_bias_variance_tradeoff(results: pd.DataFrame, key: str, label: str | None =None, baseline: bool =True):
     results_plot=results[[key, 'score']].copy()
     sort_key=results_plot[key].map(lambda x: max(x) if isinstance(x, list) else x)
     results_plot=results_plot.iloc[sort_key.argsort()]
@@ -238,47 +239,11 @@ def display_bias_variance_tradeoff(results: pd.DataFrame, key: str, label: str |
 
     plt.figure(figsize=(10, 5))
     plt.plot(results_plot[key], results_plot['score'], marker='o', label="Score")
-    plt.plot(results_plot[key], [0.0 for _ in range (len(results_plot['score']))], linestyle="--", alpha=0.4, label="Baseline")
+    if (baseline):
+        plt.plot(results_plot[key], [0.0 for _ in range (len(results_plot['score']))], linestyle="--", alpha=0.4, label="Baseline")
     plt.xlabel(f"{key} Items")
     plt.ylabel("Score")
     plt.xticks(rotation=45)
-    plt.savefig(f'../{key}_search_values_{label}.png', dpi=600, bbox_inches="tight")
+    plt.legend()
+    plt.savefig(cwd / 'Project' / 'Models' / 'results' / 'image_results' / f'{key}_selection' / f'{key}_search_values_{label}.png', dpi=600, bbox_inches="tight")
     plt.show()
-
-
-class ModelResults:
-    """Class to store and compare classification model results"""
-    def __init__(self):
-        self.results_df = pd.DataFrame(columns=['Model', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
-    
-    def add_result(self, model_name: str, accuracy: float, precision: float, recall: float, f1_score: float):
-        """Add model results to the comparison dataframe"""
-        new_result = pd.DataFrame({
-            'Model': [model_name],
-            'Accuracy': [accuracy],
-            'Precision': [precision],
-            'Recall': [recall],
-            'F1-Score': [f1_score]
-        })
-        self.results_df = pd.concat([self.results_df, new_result], ignore_index=True)
-    
-    def display_results(self):
-        """Display all model results in a formatted table"""
-        print("\n" + "="*80)
-        print("MODEL COMPARISON RESULTS")
-        print("="*80)
-        print(self.results_df.to_string(index=False))
-        print("="*80 + "\n")
-    
-    def save_results(self, filepath: str):
-        """Save results to CSV file"""
-        self.results_df.to_csv(filepath, index=False)
-        print(f"Results saved to {filepath}")
-    
-    def get_best_model(self, metric: str = 'F1-Score'):
-        """Get the best model based on specified metric"""
-        if metric in self.results_df.columns:
-            best_idx = self.results_df[metric].idxmax()
-            return self.results_df.loc[best_idx]
-        else:
-            print(f"Metric '{metric}' not found in results")
