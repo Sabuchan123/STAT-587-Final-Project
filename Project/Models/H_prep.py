@@ -149,14 +149,6 @@ def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: 
                 new_columns.append(pd.DataFrame(max_min_channel_pos, index=DATA.index, columns=price.columns).rename(columns={metric: f'Channel Position {metric} {lookback_period}'}, level=0))
             print("Created Max/Min Channel Positions/")
 
-            typical_price=(DATA.loc[:, idx['High', :, :]].values + DATA.loc[:, idx['Low', :, :]].values + DATA.loc[:, idx['Close', :, :]].values)/3
-            volume=(DATA.loc[:, idx['Volume', :, :]])
-            price_volume=typical_price*volume.values
-            price_volume_rol_sum=pd.DataFrame(price_volume, index=DATA.index, columns=volume.columns).rolling(lookback_period).sum()
-            volume_rol_sum=volume.rolling(lookback_period).sum()
-            new_columns.append((price_volume_rol_sum / volume_rol_sum).rename(columns={'Volume': f'Rolling VWAP {lookback_period}'}, level=0))
-            print("Created Rolling Volume Weighted Average Price.")
-
         for metric in DATA.columns.get_level_values(0).unique():
             if metric[:4] == "Open":
                 new_columns.append(DATA.loc[:, idx[metric, :, :]].shift(-1).rename(columns={metric: f"{metric} Forward Lag"}, level=0))
