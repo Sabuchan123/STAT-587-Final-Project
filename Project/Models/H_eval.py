@@ -5,7 +5,6 @@ from sklearn.model_selection import cross_validate
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import confusion_matrix
 from sklearn.base import BaseEstimator
-from sklearn.metrics import matthews_corrcoef
 import datetime
 
 from H_helpers import safe_div, get_cwd
@@ -107,7 +106,6 @@ def get_final_metrics(model_obj, X_train, y_train, X_test, y_test, n_splits: int
         "test_up_recall": round(safe_div(conf_mat[1][1], conf_mat[1][1] + conf_mat[1][0]), 3),
         "test_down_precision": down_precision,
         "test_down_recall": round(safe_div(conf_mat[0][0], conf_mat[0][0] + conf_mat[0][1]), 3),
-        "test_matthew_corr_coef": round(matthews_corrcoef(preds, y_test), 3),
         "train_rows": X_train.shape[0],
         "train_cols": X_train.shape[1],
         "test_rows": X_test.shape[0],

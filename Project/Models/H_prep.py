@@ -31,7 +31,7 @@ pd.set_option('display.max_columns', 8)
 
 cwd=get_cwd("STAT-587-Final-Project")
 
-def import_data(testing: bool =False, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0) -> pd.DataFrame:
+def import_data(testing: bool =False, cluster: bool =False, n_clusters: int =100, corr_threshold: float =0.95, corr_level: int =0) -> tuple[pd.DataFrame, pd.Series]:
     idx=pd.IndexSlice
     table=None
     print("------- Downloading Data")
@@ -44,16 +44,16 @@ def import_data(testing: bool =False, cluster: bool =False, n_clusters: int =100
     print("Initial shape:", DATA.shape[0], "rows,", DATA.shape[1], "columns.")
 
     print("------- Cleaning data")
-    for type in ['Stocks']: # This list contains 'Commodities' if you include Commodities
+    for type_ in ['Stocks']: # This list contains 'Commodities' if you include Commodities
         # Retrieve the specific data and drop rows that are all NA's (accounts for Holidays)
-        TEMP_DATA=DATA.loc[:, idx[:, type, :]].dropna(how="all", axis=0)
+        TEMP_DATA=DATA.loc[:, idx[:, type_, :]].dropna(how="all", axis=0)
         # Front fill for all tickers that have one NA value (accounts for ticker name changes or for holidays not being observed (specifically for commodities))
         missing_one=(TEMP_DATA.isna().sum()==1)
         cols=missing_one[missing_one==1].index
         TEMP_DATA[cols]=TEMP_DATA[cols].ffill()
         # Remove any columns that still contain NA's (usually tickers that were listed on any exchange after Jan 1st, 2024)
         TEMP_DATA=TEMP_DATA.dropna(how="any", axis=1)
-        DATA=DATA.drop(columns=type, level=1).join(TEMP_DATA)
+        DATA=DATA.drop(columns=type_, level=1).join(TEMP_DATA)
 
     # Dropping all rows where the Stocks observe a holiday in alignment with predicting if SPX will go up or down.
     stocks=DATA.loc[:, idx[:, 'Stocks', :]]
@@ -112,7 +112,7 @@ def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: 
     if isinstance(lag_period, int):
         lag_period=[lag_period]
     for lag in lag_period:
-        if (lag <= 0):
+        if (lag < 0):
             raise ValueError("lag_period must be greater than or equal to 0.")
 
     print("------- Generating Necessary Features")
@@ -149,18 +149,21 @@ def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: 
                 new_columns.append(pd.DataFrame(max_min_channel_pos, index=DATA.index, columns=price.columns).rename(columns={metric: f'Channel Position {metric} {lookback_period}'}, level=0))
             print("Created Max/Min Channel Positions/")
 
+        open_columns=[]
         for metric in DATA.columns.get_level_values(0).unique():
             if metric[:4] == "Open":
+                open_columns.append(metric)
                 new_columns.append(DATA.loc[:, idx[metric, :, :]].shift(-1).rename(columns={metric: f"{metric} Forward Lag"}, level=0))
         print("Created Open Metrics Forward Lag.")
 
+        if (new_columns):
+            DATA=pd.concat([DATA] + new_columns, axis=1)
+        DATA=DATA.sort_index(axis=1)
+
         DATA.drop(columns=["Close", "Open", "High", "Low"], level=0, inplace=True)
+        DATA.drop(columns=open_columns, level=0, inplace=True)
         DATA=DATA.sort_index(axis=1)
         print("Cleaned up Unnecessary Columns.")
-
-    if (new_columns):
-        DATA=pd.concat([DATA] + new_columns, axis=1)
-    DATA=DATA.sort_index(axis=1)
 
     y_regression = y_regression.to_frame()
     y_regression.columns = pd.MultiIndex.from_tuples([('Target', 'Index', 'Regression')])
