@@ -23,7 +23,7 @@ pd.set_option('display.max_columns', 8)
 
 lookup_df = pd.read_csv(cwd / "Project" / "Data" / "stock_lookup_table.csv")
 
-X, y=import_data(extra_features=False, corr_level=0, testing=True)
+X, y=import_data(corr_level=0, testing=True)
 
 # returns_df=X.xs(key='Close PC', axis=1, level=0)
 # returns_df.columns=returns_df.columns.droplevel(0)
@@ -68,8 +68,13 @@ X, y=import_data(extra_features=False, corr_level=0, testing=True)
 X, y=clean_data(X, y, lookback_period=28)
 vol_df=X.xs(key='Close VOL 28', axis=1, level=0)
 vol_df.columns=vol_df.columns.droplevel(0)
-sector_vol_map=lookup_df.set_index('Ticker')['Sector'].to_dict()
-sector_vol_series=vol_df.T.groupby(sector_vol_map).mean().T
+sector_map=lookup_df.set_index('Ticker')['Sector'].to_dict()
+sector_vol_series=vol_df.T.groupby(sector_map).mean().T
+
+X, y=clean_data(X, y, raw=True)
+ret_df=X.xs(key='Close PC', axis=1, level=0)
+ret_df.columns=ret_df.columns.droplevel(0)
+sector_ret_series=ret_df.T.groupby(sector_map).mean().T
 # for sector in sector_vol_series.columns:
 #     plt.plot(sector_vol_series.index, sector_vol_series[sector], label=sector)
 # plt.title("Sector Volatility Over Time")
@@ -88,15 +93,27 @@ sector_vol_series=vol_df.T.groupby(sector_vol_map).mean().T
 # plt.tight_layout()
 # plt.show()
 
-total_average_volatility=vol_df.mean(axis=1)
+# total_average_volatility=vol_df.mean(axis=1)
+# plt.figure(figsize=(10, 6))
+# plt.plot(total_average_volatility.index, total_average_volatility, color="black", linewidth=2, label="Total Market")
+# sector_vol_series=vol_df.T.groupby(sector_vol_map).mean().T
+# for sector in sector_vol_series.columns:
+#     plt.plot(sector_vol_series.index, sector_vol_series[sector], label=sector, alpha=0.35, linewidth=1)
+# plt.xlabel("Date")
+# plt.ylabel("Volatility")
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig(f'Project/Models/results/image_results/SP500FeatureImages/all_sector_rolling_VOL_28.png', dpi=600, bbox_inches="tight")
+# plt.show()
+
+total_average_ret=ret_df.mean(axis=1)
 plt.figure(figsize=(10, 6))
-plt.plot(total_average_volatility.index, total_average_volatility, color="black", linewidth=2, label="Total Market")
-sector_vol_series=vol_df.T.groupby(sector_vol_map).mean().T
-for sector in sector_vol_series.columns:
-    plt.plot(sector_vol_series.index, sector_vol_series[sector], label=sector, alpha=0.35, linewidth=1)
+plt.plot(list(total_average_ret.index)[-100:], total_average_ret.iloc[-100:].rolling(window=10).mean(), color="black", linewidth=2, label="Total Market")
+for sector in sector_ret_series.columns:
+    plt.plot(list(sector_ret_series.index)[-100:], sector_ret_series[sector].iloc[-100:].rolling(window=10).mean(), label=sector, alpha=0.35, linewidth=1)
 plt.xlabel("Date")
-plt.ylabel("Volatility")
+plt.ylabel("Daily Returns")
 plt.legend()
 plt.tight_layout()
-plt.savefig(f'Project/Models/results/image_results/SP500FeatureImages/all_sector_rolling_VOL_28.png', dpi=600, bbox_inches="tight")
+plt.savefig(f'Project/Models/results/image_results/SP500FeatureImages/all_sector_daily_return.png', dpi=600, bbox_inches="tight")
 plt.show()
