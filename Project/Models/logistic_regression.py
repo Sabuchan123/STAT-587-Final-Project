@@ -18,16 +18,14 @@ VERBOSE=0
 
 cwd=get_cwd("STAT-587-Final-Project")
 
-if __name__=="__main__":
+def run_logistic_regression(DATA, FIND_OPTIMAL=False, DISPLAY_GRAPHS=True):
     WINDOW_SIZE=200
     HORIZON=40
-    EXPORT=True
+    EXPORT=False
     TEST_SIZE=0.2
     tscv=TimeSeriesSplit(n_splits=5)
     custom_Cs=[0.05, 0.1, 1.0, 10.0]
-    DATA=import_data()
 
-    FIND_OPTIMAL=False
     W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
 
     parameters_={  # These are optimal as of 3/12/2026 11:00 PM w=4
@@ -51,7 +49,8 @@ if __name__=="__main__":
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lag_period", label='log_reg')
+        if DISPLAY_GRAPHS:
+            display_bias_variance_tradeoff(for_display, key="lag_period", label='log_reg')
         best_lag=best_parameters['lag_period']
         print(f"Best Utility Score (lag_period): {best_score}")
         print(f"Best lag_period: {best_lag}")
@@ -65,7 +64,8 @@ if __name__=="__main__":
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_Log_Reg_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lookback_period", label='log_reg')
+        if DISPLAY_GRAPHS:
+            display_bias_variance_tradeoff(for_display, key="lookback_period", label='log_reg')
         best_lookback=best_parameters['lookback_period']
         print(f"Best Utility Score (lookback_period): {best_score}")
         print(f"Best lookback_period: {best_lookback}")
@@ -110,7 +110,8 @@ if __name__=="__main__":
         'C': tested_Cs,
         'score': mean_cv_scores
     })
-    display_bias_variance_tradeoff(results_df, key='C', label='Logistic_Regression_L1', baseline=False)
+    # if DISPLAY_GRAPHS:
+    #     display_bias_variance_tradeoff(results_df, key='C', label='Logistic_Regression_L1', baseline=False)
 
     best_c = Log_Reg_model_pipeline_R.named_steps['classifier'].C_[0]
     Opt_Log_Reg_R=LogisticRegression(C=best_c, l1_ratio=1, solver='saga', random_state=1, max_iter=500, tol=1e-2)
@@ -119,7 +120,8 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(Opt_Log_Reg_model_pipeline_R), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="LR_LASSO", model="LR")
+    if DISPLAY_GRAPHS:
+        rwb_obj.display_wfv_results(label="LR_LASSO", model="LR")
 
     optimized_Log_Reg_R_=clone(Opt_Log_Reg_model_pipeline_R)
     optimized_Log_Reg_R_.fit(X_train, y_train)
@@ -134,4 +136,3 @@ if __name__=="__main__":
         results.update(rwb_obj.results[2])
         results.update(download_params)
         log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
-    input("Press Enter to Finish...")

@@ -104,6 +104,8 @@ def import_data(testing: bool =False, cluster: bool =False, n_clusters: int =100
     DATA[("Day of Week", "Calendar", "All")]=DATA.index.dayofweek
     print("Created Day of Week.")
 
+    print("Finished Importing Data -------")
+
     return DATA, y_regression
 
 def clean_data(DATA: pd.DataFrame, y_regression: pd.DataFrame, lookback_period: int =0, lag_period: list =[0], raw: bool =False, sector: bool =False, corr_threshold: float =0.95, corr_level: int =0) -> tuple[pd.DataFrame, pd.Series]:    

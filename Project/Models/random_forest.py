@@ -21,14 +21,12 @@ EXPORT=True
 
 cwd=get_cwd("STAT-587-Final-Project")
 
-if __name__=="__main__":
+def run_random_forest_classification(DATA, FIND_OPTIMAL=False, DISPLAY_GRAPHS=True):
     WINDOW_SIZE=200
     HORIZON=40
-    EXPORT=True
+    EXPORT=False
     TEST_SIZE=0.2
-    DATA=import_data()
 
-    FIND_OPTIMAL=False
     W=4 # Greater w emphasizes more accuracy, lesser w emphasizes more robustness.
 
     parameters_={ # These are optimal as of 3/8/2026 4:00 PM w=4
@@ -52,7 +50,8 @@ if __name__=="__main__":
         }
 
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, eff_support=True, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lag_period", label='RF')
+        if DISPLAY_GRAPHS:
+            display_bias_variance_tradeoff(for_display, key="lag_period", label='RF')
         best_lag=best_parameters['lag_period']
         print(f"Best Utility Score (lag_period): {best_score}")
         print(f"Best lag_period: {best_lag}")
@@ -66,7 +65,8 @@ if __name__=="__main__":
         }
         
         for_display, best_parameters, best_score=data_clean_param_selection(*DATA, clone(base_RF_model_pipeline), TEST_SIZE, WINDOW_SIZE, HORIZON, w=W, **param_grid)
-        display_bias_variance_tradeoff(for_display, key="lookback_period", label='RF')
+        if DISPLAY_GRAPHS:
+            display_bias_variance_tradeoff(for_display, key="lookback_period", label='RF')
         best_lookback=best_parameters['lookback_period']
         print(f"Best Utility Score (lookback_period): {best_score}")
         print(f"Best lookback_period: {best_lookback}")
@@ -115,7 +115,8 @@ if __name__=="__main__":
 
     rwb_obj=RollingWindowBacktest(clone(grid_search_LASSO.best_estimator_), X, y_classification, X_train, WINDOW_SIZE, HORIZON)
     rwb_obj.rolling_window_backtest(verbose=1)
-    rwb_obj.display_wfv_results(label="RF_LASSO", model="RF")
+    if DISPLAY_GRAPHS:
+        rwb_obj.display_wfv_results(label="RF_LASSO", model="RF")
 
     optimized_LASSO_=clone(grid_search_LASSO.best_estimator_)
     optimized_LASSO_.fit(X_train, y_train)
@@ -131,4 +132,3 @@ if __name__=="__main__":
         results.update(download_params)
         log_result(results, cwd / 'Project' / 'Models' / 'results', "results.csv")
         
-    input("Press Enter to Finish...")
