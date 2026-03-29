@@ -1,5 +1,7 @@
 # STAT-587 Final Project
 
+> This README.md was generated through Githubs Copilot and reviewed by Takeshi Stormer (author).
+
 This repository contains a set of tools and models for forecasting the direction of the S&P 500 using historical stock data.
 
 ## 📁 `Project/Models` Overview
